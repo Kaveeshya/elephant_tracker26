@@ -972,7 +972,7 @@ def _build_tracking_playback_fig(active_index=None):
     ]
 
     fig.update_layout(
-        height=520,
+        height=580,
         margin=dict(t=60, b=90, l=50, r=10),
         paper_bgcolor="#ffffff", plot_bgcolor="#ffffff",
         legend=dict(title_text="Sex:", orientation="h", x=0.5, xanchor="center", y=-0.09,
