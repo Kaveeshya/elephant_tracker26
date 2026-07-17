@@ -2495,7 +2495,7 @@ def render_mcp_tab():
         })
     summary_df = pd.DataFrame(summary_rows).sort_values("Area (km²)", ascending=False) if summary_rows else pd.DataFrame()
 
-    card_open("Tracking Points & Minimum Convex Polygons")
+    card_open("Tracking Points & Minimum Non Convex Polygons")
     mcp_colors_subset = {el: mcp_colors[el] for el in elephants_present}
     m = _build_mcp_hull_map(df, hulls, mcp_colors_subset, summary_df, tuple(elephants_present))
     st_folium(m, height=600, use_container_width=True, key="mcp_hull_map", returned_objects=[])
