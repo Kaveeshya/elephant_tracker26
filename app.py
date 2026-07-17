@@ -1052,10 +1052,18 @@ def _build_dona_recollared_map():
     )
 
     m = base_folium_map()
+    # Draw order matters here: later layers sit on top of earlier ones.
+    # "Other Elephants" is drawn LAST (on top) so it isn't hidden under the
+    # denser Recollared Female cluster — put it last in this list to keep
+    # that highlighted, or reorder to change which group sits on top.
+    draw_order = ["Recollared Female", "Dona", "Other Elephants"]
     # Downsample the "Other Elephants" bucket (large, lower priority) so the
     # map stays responsive; Dona and the recollared female (the actual point
     # of this map) are kept at full resolution.
-    for cat, group in d.groupby("display_category"):
+    for cat in draw_order:
+        group = d[d["display_category"] == cat]
+        if group.empty:
+            continue
         clr = DR_CATEGORY_COLORS[cat]
         sub = group if cat != "Other Elephants" else group.iloc[::max(1, len(group) // 400)]
         for _, r in sub.iterrows():
@@ -1070,7 +1078,6 @@ def _build_dona_recollared_map():
     folium.LayerControl(collapsed=False, position="bottomright").add_to(m)
     _add_categorical_legend(m, "Elephant Identity", DR_CATEGORY_COLORS)
     return m
-
 
 def render_dona_recollared_tab():
     st.markdown("<div class='section-title'>🐘 Dona & Recollared — Individual Elephant Tracking</div>", unsafe_allow_html=True)
