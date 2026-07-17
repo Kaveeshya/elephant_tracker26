@@ -873,25 +873,43 @@ def _build_tracking_scatter_fig():
 
 
 @st.cache_resource(show_spinner="Building monthly playback animation…")
-def _build_tracking_playback_fig():
+def _build_tracking_playback_fig(active_index=None):
     """One Plotly figure with a built-in Play/Pause button + slider that
     animates through months entirely in the browser — no Streamlit rerun
     per frame. Built manually with make_subplots + explicit go.Frame per
     month (rather than px.scatter's animation_frame + facet_col, which
-    doesn't reliably map frames to facet subplots and renders blank)."""
+    doesn't reliably map frames to facet subplots and renders blank).
+    `active_index` picks which month is shown when the chart first draws
+    — driven by the Back/Forward Streamlit buttons below the chart, since
+    Plotly's own animation controls only support Play (forward) and manual
+    slider dragging, not a real "step backward" button."""
     d = elephants_df.copy()
     d["date_month"] = d["datetime_sl"].dt.tz_localize(None).dt.to_period("M").dt.to_timestamp()
 
     months = sorted(d["date_month"].unique())
     month_labels = [pd.Timestamp(m).strftime("%Y %b") for m in months]
+    if active_index is None:
+        active_index = len(months) - 1
+    active_index = max(0, min(active_index, len(months) - 1))
+
+    # Facet order for THIS plot only — matches the original R app's
+    # ggplot facet_wrap layout. Scoped locally so it doesn't affect any
+    # other list/legend/plot elsewhere in the app.
+    playback_order = [n for n in [
+        "Talatha", "Pazhani", "recollared female", "Rahu", "Kasun", "Dona", "Mina",
+        "Illuk", "Dewmi", "Gothami", "Wilmini", "female_1", "Tara Devi", "Damien",
+    ] if n in ALL_NAMES] + [n for n in ALL_NAMES if n not in [
+        "Talatha", "Pazhani", "recollared female", "Rahu", "Kasun", "Dona", "Mina",
+        "Illuk", "Dewmi", "Gothami", "Wilmini", "female_1", "Tara Devi", "Damien",
+    ]]
 
     xmin, xmax = elephants_df["lon"].min(), elephants_df["lon"].max()
     ymin, ymax = elephants_df["lat"].min(), elephants_df["lat"].max()
     x_pad = (xmax - xmin) * 0.05 or 0.01
     y_pad = (ymax - ymin) * 0.05 or 0.01
 
-    n_col = min(7, len(ALL_NAMES))
-    n_row = int(np.ceil(len(ALL_NAMES) / n_col))
+    n_col = min(7, len(playback_order))
+    n_row = int(np.ceil(len(playback_order) / n_col))
     sex_colors = {"Male": "darkblue", "Female": "darkred"}
     sexes = ["Male", "Female"]
 
@@ -900,7 +918,7 @@ def _build_tracking_playback_fig():
         return sub["lon"].tolist(), sub["lat"].tolist()
 
     fig = make_subplots(
-        rows=n_row, cols=n_col, subplot_titles=ALL_NAMES,
+        rows=n_row, cols=n_col, subplot_titles=playback_order,
         horizontal_spacing=0.02, vertical_spacing=0.10,
         shared_xaxes=True, shared_yaxes=True,
     )
@@ -909,8 +927,8 @@ def _build_tracking_playback_fig():
     # every frame below will follow exactly — this is what keeps facets and
     # frames correctly lined up.
     trace_order = []
-    init_month = months[-1]
-    for i, el in enumerate(ALL_NAMES):
+    init_month = months[active_index]
+    for i, el in enumerate(playback_order):
         row, col = i // n_col + 1, i % n_col + 1
         for sex in sexes:
             x, y = _xy(init_month, el, sex)
@@ -971,7 +989,7 @@ def _build_tracking_playback_fig():
             ],
         )],
         sliders=[dict(
-            active=len(months) - 1, steps=slider_steps, x=0.06, len=0.92, y=-0.02,
+            active=active_index, steps=slider_steps, x=0.06, len=0.92, y=-0.02,
             currentvalue=dict(prefix="Month: ", font=dict(size=13, color="#1e293b")),
         )],
     )
@@ -979,7 +997,36 @@ def _build_tracking_playback_fig():
 
 
 def render_tracking_playback():
-    st.plotly_chart(_build_tracking_playback_fig(), use_container_width=True, key="tracking_playback")
+    months = sorted(
+        elephants_df["datetime_sl"].dt.tz_localize(None).dt.to_period("M").dt.to_timestamp().unique()
+    )
+    n_months = len(months)
+
+    if "playback_month_idx" not in st.session_state:
+        st.session_state.playback_month_idx = n_months - 1
+
+    def _step(delta):
+        st.session_state.playback_month_idx = max(
+            0, min(st.session_state.playback_month_idx + delta, n_months - 1)
+        )
+
+    bcol1, bcol2, bcol3 = st.columns([1, 1, 6])
+    bcol1.button("⏮ Back", use_container_width=True, on_click=_step, args=(-1,),
+                 disabled=(st.session_state.playback_month_idx <= 0))
+    bcol2.button("Forward ⏭", use_container_width=True, on_click=_step, args=(1,),
+                 disabled=(st.session_state.playback_month_idx >= n_months - 1))
+    bcol3.markdown(
+        f"<div style='padding-top:8px;color:#64748b;font-size:13px;'>"
+        f"Showing <b>{pd.Timestamp(months[st.session_state.playback_month_idx]).strftime('%B %Y')}</b> "
+        f"({st.session_state.playback_month_idx + 1} of {n_months} months). "
+        f"Use ▶ Play inside the chart to animate forward from here, or ⏮ Back / Forward ⏭ above to step "
+        f"one month at a time.</div>", unsafe_allow_html=True,
+    )
+
+    st.plotly_chart(
+        _build_tracking_playback_fig(active_index=st.session_state.playback_month_idx),
+        use_container_width=True, key="tracking_playback",
+    )
 
 
 # ══════════════════════════════════════════════════════════════════════════
@@ -1879,7 +1926,8 @@ def render_tracking_tab():
         unsafe_allow_html=True,
     )
 
-    
+    st.markdown("<div class='sub-title'>📊 Tracking Data Visualization</div>", unsafe_allow_html=True)
+    st.pyplot(_build_tracking_scatter_fig())
 
     st.markdown("<div class='sub-title'>👥 GPS Tracking Data by Individual Elephant — Monthly Playback</div>", unsafe_allow_html=True)
     render_tracking_playback()
