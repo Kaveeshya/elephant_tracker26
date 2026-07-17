@@ -1926,8 +1926,7 @@ def render_tracking_tab():
         unsafe_allow_html=True,
     )
 
-    st.markdown("<div class='sub-title'>📊 Tracking Data Visualization</div>", unsafe_allow_html=True)
-    st.pyplot(_build_tracking_scatter_fig())
+   
 
     st.markdown("<div class='sub-title'>👥 GPS Tracking Data by Individual Elephant — Monthly Playback</div>", unsafe_allow_html=True)
     render_tracking_playback()
