@@ -973,12 +973,12 @@ def _build_tracking_playback_fig(active_index=None):
 
     fig.update_layout(
         height=580,
-        margin=dict(t=60, b=90, l=50, r=10),
+        margin=dict(t=95, b=90, l=50, r=10),
         paper_bgcolor="#ffffff", plot_bgcolor="#ffffff",
         legend=dict(title_text="Sex:", orientation="h", x=0.5, xanchor="center", y=-0.09,
                     font=dict(size=12)),
         updatemenus=[dict(
-            type="buttons", showactive=False, x=0.0, y=1.10, xanchor="left",
+            type="buttons", showactive=False, x=0.0, y=1.22, xanchor="left",
             buttons=[
                 dict(label="▶ Play", method="animate",
                      args=[None, dict(frame=dict(duration=900, redraw=True),
