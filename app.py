@@ -36,130 +36,46 @@ st.set_page_config(
 # ══════════════════════════════════════════════════════════════════════════
 st.markdown("""
 <style>
-:root {
-    --accent: #0d5c4a;
-    --accent-hover: #094033;
-    --accent-light: #e6f4f0;
-    --sidebar-bg: #0d5c4a;
-    --nav-active: #1a7a62;
-}
-
-/* ── Global ── */
-.stApp { background:#f4f7f6; font-family:'Segoe UI', system-ui, sans-serif; }
-
-/* ── Sidebar ── */
-[data-testid="stSidebar"] {
-    background: var(--sidebar-bg) !important;
-}
-[data-testid="stSidebar"] * { color: white !important; }
-[data-testid="stSidebar"] a { color: #a7f3d0 !important; }
-[data-testid="stSidebar"] hr { border-color: rgba(255,255,255,0.25); }
-
-/* ── Sidebar buttons (All / Clear etc) ── */
+:root { --accent:#0f766e; --accent-light:#ecfeff; }
+.stApp { background:#f5f7fb; font-family:'Segoe UI', system-ui, sans-serif; }
+[data-testid="stSidebar"] { background:#ffffff; border-right:1px solid #e5e7eb; }
 [data-testid="stSidebar"] .stButton button {
-    background: rgba(255,255,255,0.18);
-    color: white !important;
-    border: 1px solid rgba(255,255,255,0.35);
-    border-radius: 8px;
-    font-size: 12px;
-    font-weight: 600;
-    padding: 4px 8px;
-    transition: background 0.2s;
+    background:var(--accent); color:white; border:none; border-radius:8px;
+    font-size:11px; padding:4px 2px;
 }
-[data-testid="stSidebar"] .stButton button:hover {
-    background: rgba(255,255,255,0.32) !important;
-    color: white !important;
-}
-
-/* ── Sidebar option_menu nav ── */
-[data-testid="stSidebar"] nav { background: transparent !important; }
-[data-testid="stSidebar"] .nav-link {
-    color: rgba(255,255,255,0.82) !important;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 500;
-}
-[data-testid="stSidebar"] .nav-link:hover {
-    background: rgba(255,255,255,0.15) !important;
-    color: white !important;
-}
-[data-testid="stSidebar"] .nav-link.active,
-[data-testid="stSidebar"] .nav-link-selected {
-    background: rgba(255,255,255,0.22) !important;
-    color: white !important;
-    font-weight: 700;
-}
-
-/* ── Filter / selectbox / multiselect buttons in main area ── */
-.stButton button {
-    background: var(--accent);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-weight: 600;
-    transition: background 0.2s;
-}
-.stButton button:hover { background: var(--accent-hover) !important; color: white !important; }
-
-/* ── Streamlit multiselect tags ── */
-[data-baseweb="tag"] {
-    background: var(--accent) !important;
-    color: white !important;
-    border-radius: 6px !important;
-}
-
-/* ── Metric cards ── */
-[data-testid="stMetricValue"] { color: var(--accent); }
-
-/* ── Typography ── */
-h1, h2, h3 { color: #1e293b; }
-.section-title {
-    font-size: 30px; font-weight: 800; color: #1e293b;
-    text-align: center; margin: 10px 0 16px; letter-spacing: -0.5px;
-}
-.sub-title {
-    font-size: 22px; font-weight: 700; color: #334155;
-    text-align: center; margin: 18px 0 10px;
-}
-.section-description {
-    font-size: 15px; color: #64748b; text-align: center;
-    line-height: 1.7; max-width: 900px; margin: 0 auto 20px auto;
-}
-
-/* ── Cards ── */
+[data-testid="stSidebar"] .stButton button:hover { background:#115e59; color:white; }
+h1,h2,h3 { color:#1e293b; }
+.section-title { font-size:30px; font-weight:800; color:#1e293b; text-align:center; margin:10px 0 16px; letter-spacing:-0.5px; }
+.sub-title { font-size:22px; font-weight:700; color:#334155; text-align:center; margin:18px 0 10px; }
+.section-description { font-size:15px; color:#64748b; text-align:center; line-height:1.7; max-width:900px; margin:0 auto 20px auto; }
 .card {
-    background: white; border-radius: 14px; padding: 18px 20px;
-    margin-bottom: 18px; box-shadow: 0 2px 12px rgba(0,0,0,.08);
+    background:white; border-radius:14px; padding:18px 20px; margin-bottom:18px;
+    box-shadow:0 2px 12px rgba(0,0,0,.08);
 }
-.card-title { color: var(--accent); font-size: 17px; font-weight: 700; margin-bottom: 6px; }
-.card-note  { color: #666; font-size: 12px; margin-bottom: 10px; line-height: 1.6; }
-
-/* ── Value boxes ── */
+.card-title { color:#0f766e; font-size:17px; font-weight:700; margin-bottom:6px; }
+.card-note { color:#666; font-size:12px; margin-bottom:10px; line-height:1.6; }
+.ref-heading { color:#0f766e; font-size:14px; font-weight:700; margin-bottom:4px;}
+.ref-text { color:#475569; font-size:13px; line-height:1.65; }
 .vbox {
-    border-radius: 14px; padding: 16px 18px; color: white;
-    box-shadow: 0 3px 12px rgba(0,0,0,.10);
+    border-radius:14px; padding:16px 18px; color:white; box-shadow:0 3px 12px rgba(0,0,0,.10);
 }
-.vbox .num { font-size: 26px; font-weight: 800; line-height: 1.1; }
-.vbox .lab { font-size: 12.5px; opacity: .92; margin-top: 2px; }
-
-/* ── Ref badges ── */
+.vbox .num { font-size:26px; font-weight:800; line-height:1.1; }
+.vbox .lab { font-size:12.5px; opacity:.92; margin-top:2px;}
 .ref-badge {
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 20px; height: 20px; border-radius: 50%;
-    font-size: 11px; font-weight: 700; color: white;
+    display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px;
+    border-radius:50%; font-size:11px; font-weight:700; color:white;
 }
-.ref-badge.core     { background: var(--accent); }
-.ref-badge.boundary { background: #c1440e; }
-
-hr { border-color: #e5e7eb; }
+.ref-badge.core{ background:#0f766e; } .ref-badge.boundary{ background:#c1440e; }
+[data-testid="stMetricValue"] { color:#0f766e; }
+hr { border-color:#e5e7eb; }
 </style>
 """, unsafe_allow_html=True)
 
 VBOX_COLORS = {
-    "green":  "linear-gradient(135deg,#16a34a,#15803d)",
-    "olive":  "linear-gradient(135deg,#65a30d,#4d7c0f)",
-    "teal":   "linear-gradient(135deg,#0d5c4a,#094033)",
-    "blue":   "linear-gradient(135deg,#2563eb,#1e40af)",
+    "green": "linear-gradient(135deg,#16a34a,#15803d)",
+    "olive": "linear-gradient(135deg,#65a30d,#4d7c0f)",
+    "teal": "linear-gradient(135deg,#0f766e,#115e59)",
+    "blue": "linear-gradient(135deg,#2563eb,#1e40af)",
 }
 
 
@@ -250,14 +166,11 @@ with st.sidebar:
                "sliders"],
         default_index=0,
         styles={
-            "container":        {"padding": "0", "background-color": "transparent"},
-            "icon":             {"color": "rgba(255,255,255,0.75)", "font-size": "13px"},
-            "nav-link":         {"font-size": "13px", "font-weight": "500",
-                                 "color": "rgba(255,255,255,0.82)",
-                                 "border-radius": "8px", "margin": "2px 0",
-                                 "--hover-color": "rgba(255,255,255,0.15)"},
-            "nav-link-selected": {"background-color": "rgba(255,255,255,0.22)",
-                                  "color": "white", "font-weight": "700"},
+            "container": {"padding": "0", "background-color": "#ffffff"},
+            "icon": {"color": "#0f766e", "font-size": "14px"},
+            "nav-link": {"font-size": "13px", "font-weight": "600", "color": "#334155",
+                         "border-radius": "8px", "margin": "2px 0"},
+            "nav-link-selected": {"background-color": "#0f766e", "color": "white"},
         },
     )
 
@@ -677,7 +590,7 @@ def render_time_scrubber_map(df, coord_col):
     cur_t = pd.Timestamp(times[idx])
     st.caption(f"Showing positions up to: **{cur_t:%d %b %Y %H:%M}** (Asia/Colombo)")
     m = build_sync_map(df, up_to_time=cur_t)
-    st_folium(m, height=420, use_container_width=True, key=f"map_{coord_col}_{nav}")
+    st_folium(m, height=420, use_container_width=True, key=f"map_{coord_col}_{nav}", returned_objects=[])
 
 
 # ══════════════════════════════════════════════════════════════════════════
@@ -860,7 +773,7 @@ def _build_reference_map():
 
 def render_reference_map():
     m = _build_reference_map()
-    st_folium(m, height=420, use_container_width=True, key="ref_map")
+    st_folium(m, height=420, use_container_width=True, key="ref_map", returned_objects=[])
 
 
 # ══════════════════════════════════════════════════════════════════════════
@@ -945,8 +858,21 @@ def _build_tracking_map():
     return m
 
 
-def render_tracking_playback():
-    st.plotly_chart(_build_tracking_playback_fig(), use_container_width=True, key="tracking_playback")
+@st.cache_resource(show_spinner="Building tracking scatter plot…")
+def _build_tracking_scatter_fig():
+    fig, ax = plt.subplots(figsize=(11, 7))
+    for el in ALL_NAMES:
+        sub = elephants_df[elephants_df["name"] == el]
+        ax.scatter(sub["lon"], sub["lat"], s=4, alpha=0.5, color=tracking_colors[el], label=el)
+    ax.set_title("Tracking Data", fontsize=18, fontweight="bold")
+    ax.set_xlabel("Longitude"); ax.set_ylabel("Latitude")
+    ax.legend(title="Name", bbox_to_anchor=(1.02, 1), loc="upper left", fontsize=8, markerscale=2)
+    ax.grid(alpha=0.25)
+    fig.tight_layout()
+    return fig
+
+
+@st.cache_resource(show_spinner="Building monthly playback animation…")
 def _build_tracking_playback_fig():
     """One Plotly figure with a built-in Play/Pause button + slider that
     animates through months entirely in the browser — no Streamlit rerun
@@ -1107,7 +1033,7 @@ def render_dona_recollared_tab():
         "Standard OSM terrain (green parks, blue water, yellow roads).</p>",
         unsafe_allow_html=True,
     )
-    st_folium(_build_dona_recollared_map(), height=750, use_container_width=True, key="dona_recollared_map")
+    st_folium(_build_dona_recollared_map(), height=750, use_container_width=True, key="dona_recollared_map", returned_objects=[])
 
 
 # ══════════════════════════════════════════════════════════════════════════
@@ -1126,12 +1052,16 @@ def _dc_hourly_climate():
     }
 
 
+@st.cache_data(show_spinner=False)
 def _dc_hex_polygons(lons, lats, n_bins):
     """True hexagonal bins over the points (projected to UTM 44N for
     metrically-correct hexagons), returned as (lon/lat ring, count) pairs.
     Reuses matplotlib's hexbin() to get real hexagon geometry — its path
     vertices + offsets are already in the same projected data units, so
-    vertices + offset gives the true hexagon corners directly."""
+    vertices + offset gives the true hexagon corners directly.
+    Cached on (lons, lats, n_bins): this only depends on the elephant
+    selection, not on the 'Play path' slider, so dragging that slider no
+    longer re-runs matplotlib's hexbin() + UTM reprojection on every tick."""
     xs, ys = du.to_utm(lons, lats)
     xs, ys = np.asarray(xs), np.asarray(ys)
     fig, ax = plt.subplots()
@@ -1214,7 +1144,7 @@ def render_density_climate_tab():
     path_df = centroid.merge(
         clim_table.rename(columns={"year_month": "year_month_dt"}), on="year_month_dt", how="left",
     )
-    path_df["fill_color"] = path_df["category"].map(metric_colors).fillna("#999999")
+    path_df["fill_color"] = path_df["category"].astype(str).map(metric_colors).fillna("#999999")
 
     with c1:
         card_open("Selection Summary")
@@ -1264,7 +1194,7 @@ def render_density_climate_tab():
                     ).add_to(m1)
                 _dc_add_travel_path(m1, path_df, steps)
                 folium.LayerControl(collapsed=False).add_to(m1)
-                st_folium(m1, height=640, use_container_width=True, key="dpt_density_map")
+                st_folium(m1, height=640, use_container_width=True, key="dpt_density_map", returned_objects=[])
         with m2c:
             st.markdown(
                 f"<div class='sub-title' style='font-size:15px;'>Monthly {dpt_metric.lower()} (categorical) + numbered travel path</div>",
@@ -1284,22 +1214,18 @@ def render_density_climate_tab():
                 _dc_add_travel_path(m2, path_df, steps)
                 _add_categorical_legend(m2, f"{dpt_metric} class ({period_key})", metric_colors)
                 folium.LayerControl(collapsed=False).add_to(m2)
-                st_folium(m2, height=640, use_container_width=True, key="dpt_temp_map")
+                st_folium(m2, height=640, use_container_width=True, key="dpt_temp_map", returned_objects=[])
 
 
 # ══════════════════════════════════════════════════════════════════════════
 # TAB — DAY / NIGHT  (new: ported from combined_dashboard_app's
 # day_night module)
 # ══════════════════════════════════════════════════════════════════════════
-@st.cache_data(show_spinner="Preparing Day/Night data…")
+@st.cache_resource(show_spinner="Preparing Day/Night data…")
 def _dn_data():
     hourly = du.load_climate_hourly()
-    gps = du.build_dn_gps(elephants_df, hourly)
-    # Downsample GPS to max 6000 points for speed — sample evenly across time
-    if len(gps) > 6000:
-        gps = gps.iloc[::max(1, len(gps)//6000)].reset_index(drop=True)
     return {
-        "gps": gps,
+        "gps": du.build_dn_gps(elephants_df, hourly),
         "daily_temp": du.build_dn_daily_temp(hourly),
         "daily_rain": du.build_dn_daily_rain(hourly),
     }
@@ -1345,7 +1271,7 @@ def render_day_night_tab():
         st.caption("All GPS fixes plotted simultaneously · Red = Day (06:00–18:00) · Blue = Night (18:00–06:00)")
         m_dn = base_folium_map()
         _dn_add_points(m_dn, df, "day_night", {"Day": "#dc2626", "Night": "#2563eb"}, "Time of Day")
-        st_folium(m_dn, height=460, use_container_width=True, key="dn_map1")
+        st_folium(m_dn, height=460, use_container_width=True, key="dn_map1", returned_objects=[])
 
         st.markdown("<div class='sub-title' style='font-size:15px;'>Map 2 — Climate Period</div>", unsafe_allow_html=True)
         climate_tab_map = st.radio(
@@ -1364,13 +1290,13 @@ def render_day_night_tab():
                 _dn_add_points(m_hc, df, "hot_cool", {"Hot": "#dc2626", "Cool": "#2563eb"}, "Temperature Period")
             else:
                 _dn_add_points(m_hc, df, "period", du.DN_PERIOD_5_COLS, "Temperature Period")
-            st_folium(m_hc, height=460, use_container_width=True, key="dn_map2")
+            st_folium(m_hc, height=460, use_container_width=True, key="dn_map2", returned_objects=[])
 
         elif climate_tab_map.startswith("Rainfall"):
             st.caption("All GPS fixes · Red = Heavy rain period · Green = Low rain period")
             m_hc = base_folium_map()
             _dn_add_points(m_hc, df, "rain", du.DN_RAIN_2_COLS, "Rainfall Period")
-            st_folium(m_hc, height=460, use_container_width=True, key="dn_map2")
+            st_folium(m_hc, height=460, use_container_width=True, key="dn_map2", returned_objects=[])
 
         else:  # Hourly Rain Filter
             st.caption("Filters the map to ONLY show locations where the hourly rainfall exceeded your selected threshold(s).")
@@ -1394,7 +1320,7 @@ def render_day_night_tab():
 
             m_hc = base_folium_map()
             _dn_add_points(m_hc, df_map2, "rain_cat", du.DN_HOURLY_RAIN_COLS, "Hourly Rainfall")
-            st_folium(m_hc, height=460, use_container_width=True, key="dn_map2")
+            st_folium(m_hc, height=460, use_container_width=True, key="dn_map2", returned_objects=[])
 
     if climate_tab_map.startswith("Temperature"):
         st.markdown("<div class='sub-title'>Temperature Time Series with Hot / Cool Period Boundaries</div>", unsafe_allow_html=True)
@@ -1455,7 +1381,7 @@ def render_day_night_tab():
 # TAB — VEGETATION TRACKING  (new: ported from combined_dashboard_app's
 # vegetation_tracking module)
 # ══════════════════════════════════════════════════════════════════════════
-@st.cache_data(show_spinner="Preparing vegetation & hotspot data…")
+@st.cache_resource(show_spinner="Preparing vegetation & hotspot data…")
 def _vt_data():
     all_hs, each_hs = du.build_vt_hotspots(elephants_df)
     return {
@@ -1576,7 +1502,7 @@ def render_vegetation_tab():
                     popup=f"<b>{r['name']}</b><br>Year: <b>{yr}</b><br>Lat: {r['lat']:.5f}  Lon: {r['lon']:.5f}<br>{r['datetime']:%Y-%m-%d %H:%M UTC}",
                 ).add_to(m_gps)
         _add_categorical_legend(m_gps, "Year", {y: du.VT_GPS_YEAR_COLS.get(y, "#888") for y in sorted(sel_years)})
-        st_folium(m_gps, height=440, use_container_width=True, key="vt_map_gps")
+        st_folium(m_gps, height=440, use_container_width=True, key="vt_map_gps", returned_objects=[])
         st.caption("Dots coloured by year: 🟠 2024 🔵 2025 🟢 2026. Click a dot for details.")
         card_close()
 
@@ -1675,7 +1601,7 @@ def render_vegetation_tab():
                 _vt_add_directional_arrow(m_comb, a["lat"], a["lon"], b["lat"], b["lon"], e_col)
 
         _add_categorical_legend(m_comb, "🐘 Elephant hotspot", {nm: data["ele_colors"].get(nm, "#888") for nm in sel_eles})
-        st_folium(m_comb, height=440, use_container_width=True, key="vt_map_combined")
+        st_folium(m_comb, height=440, use_container_width=True, key="vt_map_combined", returned_objects=[])
         st.caption(
             "▲ Triangle = All-elephant #1 hotspot per year (🟠 2024  🔵 2025  🟢 2026). "
             "Dot = per-elephant most-visited spot; chevron shows direction 2024→2025→2026."
@@ -1850,7 +1776,7 @@ def render_tracking_general_tab():
                 ).add_to(m)
         if bounds:
             m.fit_bounds(bounds)
-        st_folium(m, height=450, use_container_width=True, key="tk_map")
+        st_folium(m, height=450, use_container_width=True, key="tk_map", returned_objects=[])
         card_close()
 
     with c3:
@@ -1941,7 +1867,7 @@ def render_tracking_tab():
     st.markdown("<div class='section-title'>🗺️ Elephant Tracking Overview</div>", unsafe_allow_html=True)
     st.markdown("<div class='sub-title'>Interactive Map with Satellite View</div>", unsafe_allow_html=True)
 
-    st_folium(_build_tracking_map(), height=600, use_container_width=True, key="tracking_map")
+    st_folium(_build_tracking_map(), height=600, use_container_width=True, key="tracking_map", returned_objects=[])
 
     st.markdown(
         "<div style='text-align:center; margin: 18px 0;'>"
@@ -1952,6 +1878,9 @@ def render_tracking_tab():
         "Click here for the Month Wise GPS Tracking Data Analysis</button></a></div>",
         unsafe_allow_html=True,
     )
+
+    st.markdown("<div class='sub-title'>📊 Tracking Data Visualization</div>", unsafe_allow_html=True)
+    st.pyplot(_build_tracking_scatter_fig())
 
     st.markdown("<div class='sub-title'>👥 GPS Tracking Data by Individual Elephant — Monthly Playback</div>", unsafe_allow_html=True)
     render_tracking_playback()
@@ -2249,128 +2178,141 @@ def render_live_playback(df, live_elephant):
 # ══════════════════════════════════════════════════════════════════════════
 # TAB 7 — MIGRATION & CLIMATE
 # ══════════════════════════════════════════════════════════════════════════
+@st.cache_data(show_spinner="Building availability calendar…")
+def _build_availability_calendar(avail_elephant):
+    sub = elephants_df[elephants_df["name"] == avail_elephant].copy()
+    sub["day"] = sub["datetime_sl"].dt.date
+    daily = sub.groupby("day").size().reset_index(name="valid_records").rename(columns={"day": "date"})
+    full_range = pd.date_range(elephants_df["datetime_sl"].dt.date.min(),
+                                elephants_df["datetime_sl"].dt.date.max(), freq="D").date
+    daily = pd.DataFrame({"date": full_range}).merge(daily, on="date", how="left")
+    daily["valid_records"] = daily["valid_records"].fillna(0)
+    daily["availability"] = np.minimum(100, 100 * daily["valid_records"] / 24)
+    if daily.empty:
+        return None
+    return make_calendar_heatmap(
+        daily["date"], daily["availability"],
+        title=f"Daily GPS Availability Calendar Heatmap – {avail_elephant}",
+        discrete_breaks=du.AVAILABILITY_BREAKS, discrete_labels=du.AVAILABILITY_LABELS,
+        discrete_colors=du.AVAILABILITY_COLORS,
+    )
+
+
+@st.cache_resource(show_spinner="Building migration map…")
+def _build_migration_map_cached(mig_year, mig_month, mig_elephant, mig_weeks_tuple, show_numbers):
+    """Bundles the map build AND the HTML render + base64 encode (used for
+    the 'open in new tab' button) into one cached call — both were
+    previously redone on every rerun of this page, including reruns
+    triggered by unrelated widgets like the availability-calendar dropdown
+    above it."""
+    dat = elephants_df[
+        (elephants_df["year"] == mig_year) & (elephants_df["month"] == mig_month) &
+        (elephants_df["name"] == mig_elephant)
+    ].copy()
+    if not dat.empty:
+        dat["week_of_month"] = du.week_of_month(dat["datetime_sl"])
+        if mig_weeks_tuple and "All Weeks" not in mig_weeks_tuple:
+            dat = dat[dat["week_of_month"].isin(mig_weeks_tuple)]
+    m = build_migration_map(dat, show_numbers=show_numbers)
+    html_bytes = m.get_root().render().encode("utf-8")
+    b64 = base64.b64encode(html_bytes).decode("utf-8")
+    return m, b64
+
+
+@st.cache_data(show_spinner="Building climate calendar…")
+def _build_climate_calendar(clim_var):
+    info = du.CLIMATE_PLOT_INFO[clim_var]
+    vals = climate_df[info["col"]].astype(float)
+    return make_calendar_heatmap(
+        climate_df["date"], vals, title=info["title"],
+        discrete_breaks=info["breaks"], discrete_labels=info["labels"], discrete_colors=du.CALENDAR_COLORS,
+        height=500,
+    )
+
+
 def render_climate_tab():
     st.markdown("<div class='section-title'>🐘 Elephant Tracking Data Availability</div>", unsafe_allow_html=True)
-    c1, c2 = st.columns([3, 9])
-    with c1:
-        card_open()
+    card_open()
+    fc1, fc2 = st.columns([3, 9])
+    with fc1:
         avail_elephant = st.selectbox("Select Elephant Name:", ALL_NAMES, key="avail_elephant")
+    with fc2:
         st.caption("This heatmap shows the percentage of valid GPS records captured per day (max 24 records/day).")
-        card_close()
-    with c2:
-        card_open()
-        sub = elephants_df[elephants_df["name"] == avail_elephant].copy()
-        # elephants_df already drops rows with NaN lat/lon, so counting rows per
-        # day gives the number of valid GPS fixes captured that day.
-        sub["day"] = sub["datetime_sl"].dt.date
-        daily = sub.groupby("day").size().reset_index(name="valid_records").rename(columns={"day": "date"})
-
-        # Fill every day across the FULL dataset's date range (not just this
-        # elephant's own tracked days) with 0 records by default. Without
-        # this, days with zero GPS fixes — collar not yet deployed, dropout,
-        # etc. — are just blank/missing from the grid instead of showing as
-        # a visible gray "0%" cell, which loses exactly the information this
-        # calendar exists to show (matches the R app's calendarHeat output).
-        full_range = pd.date_range(elephants_df["datetime_sl"].dt.date.min(),
-                                    elephants_df["datetime_sl"].dt.date.max(), freq="D").date
-        daily = pd.DataFrame({"date": full_range}).merge(daily, on="date", how="left")
-        daily["valid_records"] = daily["valid_records"].fillna(0)
-        daily["availability"] = np.minimum(100, 100 * daily["valid_records"] / 24)
-
-        if daily.empty:
-            st.info("No data available for the selected elephant.")
-        else:
-            fig = make_calendar_heatmap(
-                daily["date"], daily["availability"],
-                title=f"Daily GPS Availability Calendar Heatmap – {avail_elephant}",
-                discrete_breaks=du.AVAILABILITY_BREAKS, discrete_labels=du.AVAILABILITY_LABELS,
-                discrete_colors=du.AVAILABILITY_COLORS,
-            )
-            st.plotly_chart(fig, use_container_width=True, key="calendar_plot")
-        card_close()
+    card_close()
+    card_open()
+    fig = _build_availability_calendar(avail_elephant)
+    if fig is None:
+        st.info("No data available for the selected elephant.")
+    else:
+        st.plotly_chart(fig, use_container_width=True, key="calendar_plot")
+    card_close()
 
     st.markdown("<div class='section-title'>🐘 Elephant Migration Map</div>", unsafe_allow_html=True)
-    c1, c2 = st.columns([2, 10])
-    with c1:
-        card_open()
+    card_open()
+    mf1, mf2, mf3, mf4, mf5 = st.columns([2, 2, 2, 3, 2])
+    with mf1:
         years_avail = sorted(elephants_df["year"].unique())
         mig_year = st.selectbox("Select Year", years_avail, key="mig_year")
+    with mf2:
         mig_month = st.selectbox("Select Month", [f"{m:02d}" for m in range(1, 13)], key="mig_month")
+    with mf3:
         mig_elephant = st.selectbox("Select Elephant", ALL_NAMES, key="mig_elephant")
+    with mf4:
         mig_weeks = st.multiselect(
             "Select Week", ["All Weeks", "Week 1", "Week 2", "Week 3", "Week 4"],
             default=["All Weeks"], key="mig_weeks",
         )
+    with mf5:
         show_seq_numbers = st.checkbox("Show point sequence numbers", value=False, key="show_seq_numbers")
-        card_close()
-    with c2:
-        card_open()
-        dat = elephants_df[
-            (elephants_df["year"] == mig_year) & (elephants_df["month"] == mig_month) &
-            (elephants_df["name"] == mig_elephant)
-        ].copy()
-        if not dat.empty:
-            dat["week_of_month"] = du.week_of_month(dat["datetime_sl"])
-            if mig_weeks and "All Weeks" not in mig_weeks:
-                dat = dat[dat["week_of_month"].isin(mig_weeks)]
-
-        m = build_migration_map(dat, show_numbers=show_seq_numbers)
-
-        html_bytes = m.get_root().render().encode("utf-8")
-        b64 = base64.b64encode(html_bytes).decode("utf-8")
-        # A data: URI link breaks once the map's HTML gets large (browsers
-        # cap data: URI length, and a Leaflet map with many markers easily
-        # exceeds it). A Blob URL has no such size limit, but building one
-        # needs real JS execution, so this goes through components.html
-        # rather than st.markdown (whose <script> tags don't execute).
-        components.html(
-            f"""
-            <div style="text-align:right;">
-              <button onclick="openMigrationMap()" style="background:#2E8B57; color:white; border:none;
-                padding:6px 14px; font-size:13px; font-weight:600; border-radius:6px; cursor:pointer;">
-                🔗 Open Map in New Tab
-              </button>
-            </div>
-            <script>
-            function openMigrationMap() {{
-                const b64 = "{b64}";
-                const byteChars = atob(b64);
-                const byteNumbers = new Array(byteChars.length);
-                for (let i = 0; i < byteChars.length; i++) {{
-                    byteNumbers[i] = byteChars.charCodeAt(i);
-                }}
-                const byteArray = new Uint8Array(byteNumbers);
-                const blob = new Blob([byteArray], {{ type: "text/html" }});
-                const url = URL.createObjectURL(blob);
-                window.open(url, "_blank");
+    card_close()
+    card_open()
+    m, b64 = _build_migration_map_cached(
+        mig_year, mig_month, mig_elephant, tuple(sorted(mig_weeks)), show_seq_numbers
+    )
+    components.html(
+        f"""
+        <div style="text-align:right;">
+          <button onclick="openMigrationMap()" style="background:#2E8B57; color:white; border:none;
+            padding:6px 14px; font-size:13px; font-weight:600; border-radius:6px; cursor:pointer;">
+            🔗 Open Map in New Tab
+          </button>
+        </div>
+        <script>
+        function openMigrationMap() {{
+            const b64 = "{b64}";
+            const byteChars = atob(b64);
+            const byteNumbers = new Array(byteChars.length);
+            for (let i = 0; i < byteChars.length; i++) {{
+                byteNumbers[i] = byteChars.charCodeAt(i);
             }}
-            </script>
-            """,
-            height=44,
-        )
-        st_folium(m, height=600, use_container_width=True, key="migration_map")
-        card_close()
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], {{ type: "text/html" }});
+            const url = URL.createObjectURL(blob);
+            window.open(url, "_blank");
+        }}
+        </script>
+        """,
+        height=44,
+    )
+    st_folium(m, height=600, use_container_width=True, key="migration_map", returned_objects=[])
+    card_close()
 
     st.markdown("<div class='section-title'>🌡 Climate Calendar Analysis</div>", unsafe_allow_html=True)
-    c1, c2 = st.columns([3, 9])
-    with c1:
-        card_open()
+    card_open()
+    cc1, cc2 = st.columns([3, 9])
+    with cc1:
         clim_var = st.selectbox("Climate Variable", list(du.CLIMATE_PLOT_INFO.keys()), key="clim_var")
+    with cc2:
         st.caption("This calendar heatmap displays daily values of the selected climate variable.")
-        card_close()
+    card_close()
 
     info = du.CLIMATE_PLOT_INFO[clim_var]
     vals = climate_df[info["col"]].astype(float)
 
-    with c2:
-        card_open()
-        fig = make_calendar_heatmap(
-            climate_df["date"], vals, title=info["title"],
-            discrete_breaks=info["breaks"], discrete_labels=info["labels"], discrete_colors=du.CALENDAR_COLORS,
-            height=500,
-        )
-        st.plotly_chart(fig, use_container_width=True, key="climate_calendar_plot")
-        card_close()
+    card_open()
+    fig = _build_climate_calendar(clim_var)
+    st.plotly_chart(fig, use_container_width=True, key="climate_calendar_plot")
+    card_close()
 
     # Full-width summary table below both columns — a Measure x Year table
     # needs real horizontal room, which the narrow sidebar column doesn't have.
@@ -2435,6 +2377,57 @@ def render_data_tab():
 # ══════════════════════════════════════════════════════════════════════════
 # TAB 9 — HOME RANGE & SPEED (MCP module)
 # ══════════════════════════════════════════════════════════════════════════
+@st.cache_resource(show_spinner="Building home range map…")
+def _build_mcp_hull_map(df, hulls, mcp_colors_subset, summary_df, elephants_present):
+    """df/hulls/summary_df/elephants_present together fully determine the
+    map, so caching on them means dragging an unrelated widget (e.g. the
+    focus-elephant picker staying the same) or a rerun triggered elsewhere
+    on the page reuses this map instead of rebuilding every polygon and
+    point marker from scratch."""
+    m = folium.Map(location=[mcp_df["lat"].mean(), mcp_df["lon"].mean()], zoom_start=12, control_scale=True, prefer_canvas=True)
+    folium.TileLayer("CartoDB positron", name="Light").add_to(m)
+    folium.TileLayer("OpenStreetMap", name="Street").add_to(m)
+    folium.TileLayer(
+        tiles="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+        attr="Esri", name="Satellite",
+    ).add_to(m)
+    for el in elephants_present:
+        color = mcp_colors_subset[el]
+        h = hulls.get(el)
+        info_row = summary_df[summary_df["Elephant"] == el]
+        if h and not info_row.empty:
+            r = info_row.iloc[0]
+            popup_html = (
+                f"<div style='width:220px;'><h4>{el} — MCP</h4>"
+                f"<b>Sex:</b> {r['Sex']}<br><b>Area:</b> {r['Area (km²)']} km² ({r['Area (ha)']:,.0f} ha)<br>"
+                f"<b>GPS fixes:</b> {r['GPS Fixes']:,}<br><b>Total distance:</b> {r['Total Dist. (km)']} km<br>"
+                f"<b>Avg speed:</b> {r['Avg Speed (km/h)']} km/h</div>"
+            )
+            folium.Polygon(list(zip(h["lats"], h["lons"])), color=color, weight=2, fill=True,
+                            fill_color=color, fill_opacity=0.15, popup=popup_html,
+                            tooltip=f"{el} — Hull").add_to(m)
+    for el in elephants_present:
+        edata = df[df["name"] == el]
+        color = mcp_colors_subset[el]
+        fg = folium.FeatureGroup(name=f"{el} — points", show=False)
+        step = max(1, len(edata) // 150)
+        for _, r in edata.iloc[::step].iterrows():
+            folium.CircleMarker([r["lat"], r["lon"]], radius=3, color=color, fill=True, fill_color=color,
+                                  fill_opacity=0.6, weight=1, tooltip=f"{el} — {r['datetime']:%d %b %Y}").add_to(fg)
+        fg.add_to(m)
+        if len(edata):
+            folium.CircleMarker([edata["lat"].mean(), edata["lon"].mean()], radius=7, color="#ffffff",
+                                  weight=2, fill=True, fill_color=color, fill_opacity=1,
+                                  popup=f"<b>Center:</b> {el}").add_to(m)
+    if elephants_present:
+        all_pts = list(zip(df["lat"], df["lon"]))
+        if all_pts:
+            m.fit_bounds(all_pts)
+    folium.LayerControl(collapsed=False).add_to(m)
+    _add_categorical_legend(m, "Elephant", {el: mcp_colors_subset[el] for el in elephants_present})
+    return m
+
+
 def render_mcp_tab():
     st.markdown("<div class='section-title'>🧭 Home Range, Movement & Speed</div>", unsafe_allow_html=True)
     st.markdown(
@@ -2484,7 +2477,7 @@ def render_mcp_tab():
     hulls, summary_rows = {}, []
     for el in elephants_present:
         edata = df[df["name"] == el]
-        h = du.compute_hull(edata, ratio=0.3)
+        h = du.compute_hull_cached(tuple(edata["lon"]), tuple(edata["lat"]), ratio=0.3)
         hulls[el] = h
         step_dist = edata["step_km"].replace([np.inf, -np.inf], np.nan).dropna()
         step_speed = edata["speed_kmh"].replace([np.inf, -np.inf], np.nan).dropna()
@@ -2503,49 +2496,9 @@ def render_mcp_tab():
     summary_df = pd.DataFrame(summary_rows).sort_values("Area (km²)", ascending=False) if summary_rows else pd.DataFrame()
 
     card_open("Tracking Points & Minimum Convex Polygons")
-    m = folium.Map(location=[mcp_df["lat"].mean(), mcp_df["lon"].mean()], zoom_start=12, control_scale=True, prefer_canvas=True)
-    folium.TileLayer("CartoDB positron", name="Light").add_to(m)
-    folium.TileLayer("OpenStreetMap", name="Street").add_to(m)
-    folium.TileLayer(
-        tiles="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-        attr="Esri", name="Satellite",
-    ).add_to(m)
-    for el in elephants_present:
-        edata = df[df["name"] == el]
-        color = mcp_colors[el]
-        h = hulls.get(el)
-        info_row = summary_df[summary_df["Elephant"] == el]
-        if h and not info_row.empty:
-            r = info_row.iloc[0]
-            popup_html = (
-                f"<div style='width:220px;'><h4>{el} — MCP</h4>"
-                f"<b>Sex:</b> {r['Sex']}<br><b>Area:</b> {r['Area (km²)']} km² ({r['Area (ha)']:,.0f} ha)<br>"
-                f"<b>GPS fixes:</b> {r['GPS Fixes']:,}<br><b>Total distance:</b> {r['Total Dist. (km)']} km<br>"
-                f"<b>Avg speed:</b> {r['Avg Speed (km/h)']} km/h</div>"
-            )
-            folium.Polygon(list(zip(h["lats"], h["lons"])), color=color, weight=2, fill=True,
-                            fill_color=color, fill_opacity=0.15, popup=popup_html,
-                            tooltip=f"{el} — Hull").add_to(m)
-    for el in elephants_present:
-        edata = df[df["name"] == el]
-        color = mcp_colors[el]
-        fg = folium.FeatureGroup(name=f"{el} — points", show=False)
-        step = max(1, len(edata) // 150)
-        for _, r in edata.iloc[::step].iterrows():
-            folium.CircleMarker([r["lat"], r["lon"]], radius=3, color=color, fill=True, fill_color=color,
-                                  fill_opacity=0.6, weight=1, tooltip=f"{el} — {r['datetime']:%d %b %Y}").add_to(fg)
-        fg.add_to(m)
-        if len(edata):
-            folium.CircleMarker([edata["lat"].mean(), edata["lon"].mean()], radius=7, color="#ffffff",
-                                  weight=2, fill=True, fill_color=color, fill_opacity=1,
-                                  popup=f"<b>Center:</b> {el}").add_to(m)
-    if elephants_present:
-        all_pts = list(zip(df["lat"], df["lon"]))
-        if all_pts:
-            m.fit_bounds(all_pts)
-    folium.LayerControl(collapsed=False).add_to(m)
-    _add_categorical_legend(m, "Elephant", {el: mcp_colors[el] for el in elephants_present})
-    st_folium(m, height=600, use_container_width=True, key="mcp_hull_map")
+    mcp_colors_subset = {el: mcp_colors[el] for el in elephants_present}
+    m = _build_mcp_hull_map(df, hulls, mcp_colors_subset, summary_df, tuple(elephants_present))
+    st_folium(m, height=600, use_container_width=True, key="mcp_hull_map", returned_objects=[])
     card_close()
 
     card_open("Cumulative Distance Traveled Over Time")
