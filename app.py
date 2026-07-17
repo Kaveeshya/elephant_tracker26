@@ -1826,31 +1826,7 @@ def render_tracking_general_tab():
         st_folium(m, height=450, use_container_width=True, key="tk_map", returned_objects=[])
         card_close()
 
-    with c3:
-        card_open("Tracking Data (Longitude / Latitude)")
-        st.caption("Points accumulate as you drag the Timeline slider.")
-        lat_span = df_upto["lat"].max() - df_upto["lat"].min()
-        lon_center = (df_upto["lon"].min() + df_upto["lon"].max()) / 2
-        fig = go.Figure()
-        for el in sorted(df_upto["name"].unique()):
-            sub = df_upto[df_upto["name"] == el]
-            fig.add_trace(go.Scatter(
-                x=sub["lon"], y=sub["lat"], mode="markers", name=el,
-                marker=dict(size=6, opacity=0.5, color=tk_ele_colors.get(el, "#888")),
-                hovertemplate=f"<b>{el}</b><br>Lon: %{{x:.5f}}<br>Lat: %{{y:.5f}}<extra></extra>",
-            ))
-        if not current_pt.empty:
-            fig.add_trace(go.Scatter(
-                x=current_pt["lon"], y=current_pt["lat"], mode="markers", showlegend=False,
-                marker=dict(size=12, color="white", line=dict(color="black", width=2)),
-            ))
-        fig.update_layout(
-            xaxis=dict(title="Longitude", range=[lon_center - lat_span / 2, lon_center + lat_span / 2] if lat_span > 0 else None),
-            yaxis=dict(title="Latitude"),
-            plot_bgcolor="#f8f9fa", paper_bgcolor="white", margin=dict(t=10, b=40, l=50, r=20), height=440,
-        )
-        st.plotly_chart(fig, use_container_width=True)
-        card_close()
+   
 
     card_open(f"Climate Data — {lbl} Over Selected Date Range")
     fig = go.Figure()
