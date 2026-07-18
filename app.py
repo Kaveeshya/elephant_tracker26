@@ -2563,10 +2563,7 @@ def _build_mcp_hull_map(df, hulls, mcp_colors_subset, summary_df, elephants_pres
             folium.CircleMarker([r["lat"], r["lon"]], radius=3, color=color, fill=True, fill_color=color,
                                   fill_opacity=0.6, weight=1, tooltip=f"{el} — {r['datetime']:%d %b %Y}").add_to(fg)
         fg.add_to(m)
-        if len(edata):
-            folium.CircleMarker([edata["lat"].mean(), edata["lon"].mean()], radius=7, color="#ffffff",
-                                  weight=2, fill=True, fill_color=color, fill_opacity=1,
-                                  popup=f"<b>Center:</b> {el}").add_to(m)
+       
     if elephants_present:
         all_pts = list(zip(df["lat"], df["lon"]))
         if all_pts:
