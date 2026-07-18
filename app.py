@@ -52,21 +52,21 @@ p, span, div, label, li, td, th, caption, figcaption {
 }
 
 /* ── Sidebar ── */
-[data-testid="stSidebar"] { background:#0d5c4a !important; }
-[data-testid="stSidebar"] * { color: white !important; }
-[data-testid="stSidebar"] a { color: #a7f3d0 !important; }
-[data-testid="stSidebar"] hr { border-color: rgba(255,255,255,0.25); }
+[data-testid="stSidebar"] { background:#ffffff !important; border-right: 2px solid #e2e8f0; }
+[data-testid="stSidebar"] * { color: #0f172a !important; }
+[data-testid="stSidebar"] a { color: #0d5c4a !important; }
+[data-testid="stSidebar"] hr { border-color: #cbd5e1; }
 [data-testid="stSidebar"] .stButton button {
-    background: rgba(255,255,255,0.2);
+    background: #0d5c4a;
     color: white !important;
-    border: 1px solid rgba(255,255,255,0.4);
+    border: none;
     border-radius: 8px;
     font-size: 13px;
     font-weight: 700;
     padding: 5px 10px;
 }
 [data-testid="stSidebar"] .stButton button:hover {
-    background: rgba(255,255,255,0.35) !important;
+    background: #094033 !important;
 }
 
 /* ── Headings ── */
@@ -264,13 +264,13 @@ with st.sidebar:
                "sliders"],
         default_index=0,
         styles={
-            "container":         {"padding": "0", "background-color": "transparent"},
-            "icon":              {"color": "white", "font-size": "15px"},
+            "container":         {"padding": "0", "background-color": "#ffffff"},
+            "icon":              {"color": "#0d5c4a", "font-size": "15px"},
             "nav-link":          {"font-size": "14px", "font-weight": "700",
-                                  "color": "white",
+                                  "color": "#0f172a",
                                   "border-radius": "8px", "margin": "2px 0",
-                                  "--hover-color": "rgba(255,255,255,0.20)"},
-            "nav-link-selected": {"background-color": "rgba(255,255,255,0.28)",
+                                  "--hover-color": "#e6f4f0"},
+            "nav-link-selected": {"background-color": "#0d5c4a",
                                   "color": "white", "font-weight": "900"},
         },
     )
