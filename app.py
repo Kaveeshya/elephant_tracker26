@@ -117,7 +117,7 @@ h1, h2, h3, h4 { color: #0a0f1e !important; font-weight: 800; }
 
 /* ── Streamlit multiselect tags ── */
 [data-baseweb="tag"] {
-    background: #0d5c4a !important;
+    background: #c0392b !important;
     color: white !important;
     border-radius: 6px !important;
     font-weight: 700 !important;
@@ -125,14 +125,20 @@ h1, h2, h3, h4 { color: #0a0f1e !important; font-weight: 800; }
 
 /* ── Main area buttons ── */
 .stButton button {
-    background: #0d5c4a;
+    background: #c0392b;
     color: white;
     border: none;
     border-radius: 8px;
     font-weight: 700;
     font-size: 14px;
 }
-.stButton button:hover { background: #094033 !important; color: white !important; }
+.stButton button:hover { background: #922b21 !important; color: white !important; }
+
+/* ── Sidebar buttons keep teal ── */
+[data-testid="stSidebar"] .stButton button {
+    background: #0d5c4a !important;
+    color: white !important;
+}
 
 /* ── Tables ── */
 .stDataFrame td, .stDataFrame th {
