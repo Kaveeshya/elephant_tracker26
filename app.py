@@ -287,7 +287,7 @@ with st.sidebar:
       <div style="background:#2ecc71;color:white;border-radius:10px;padding:12px 16px;
                   text-align:center;font-size:14px;font-weight:800;cursor:pointer;
                   box-shadow:0 2px 8px rgba(0,0,0,0.15);margin-bottom:8px;">
-        🔬 Full Analysis ↗
+        🔬 Further Analysis ↗
         <div style="font-size:11px;font-weight:800;opacity:1;margin-top:3px;">
           Dona & Recollared · Density & Climate<br>Day/Night · Vegetation · Tracking
         </div>
