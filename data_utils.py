@@ -224,14 +224,33 @@ def insert_gaps(df, time_col="datetime_sl", cols=("lat", "lon")):
 _GEOD = Geod(ellps="WGS84")
 
 
+def vincenty_km(lat1, lon1, lat2, lon2):
+    """
+    Geodesic distance using Karney's method (via pyproj Geod, WGS84 ellipsoid).
+    This is the most accurate distance formula available — it models the Earth
+    as an oblate spheroid rather than a perfect sphere (as Haversine does),
+    giving errors < 0.000001% vs Haversine's ~0.3%.
+    Accepts scalars or numpy arrays.
+    """
+    lat1 = np.asarray(lat1, dtype=float)
+    lon1 = np.asarray(lon1, dtype=float)
+    lat2 = np.asarray(lat2, dtype=float)
+    lon2 = np.asarray(lon2, dtype=float)
+
+    mask = ~(np.isnan(lat1) | np.isnan(lon1) | np.isnan(lat2) | np.isnan(lon2))
+    result = np.full(lat1.shape, np.nan)
+
+    if mask.any():
+        _, _, dist_m = _GEOD.inv(lon1[mask], lat1[mask], lon2[mask], lat2[mask])
+        result[mask] = dist_m / 1000.0
+
+    return result if result.ndim > 0 else float(result)
+
+
+# Keep haversine_km as an alias so any existing calls elsewhere still work
 def haversine_km(lat1, lon1, lat2, lon2):
-    R = 6371.0
-    lat1, lon1, lat2, lon2 = map(np.radians, [lat1, lon1, lat2, lon2])
-    dlat = lat2 - lat1
-    dlon = lon2 - lon1
-    a = np.sin(dlat / 2) ** 2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon / 2) ** 2
-    c = 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
-    return R * c
+    """Alias for vincenty_km — kept for backward compatibility."""
+    return vincenty_km(lat1, lon1, lat2, lon2)
 
 
 def compute_bearing(lat1, lon1, lat2, lon2):
@@ -246,13 +265,18 @@ def compute_bearing(lat1, lon1, lat2, lon2):
 def add_movement_metrics(df):
     df = df.sort_values(["name", "datetime"]).copy()
     g = df.groupby("name")
-    df["prev_lat"] = g["lat"].shift()
-    df["prev_lon"] = g["lon"].shift()
+    df["prev_lat"]  = g["lat"].shift()
+    df["prev_lon"]  = g["lon"].shift()
     df["prev_time"] = g["datetime"].shift()
-    df["step_km"] = haversine_km(df["prev_lat"], df["prev_lon"], df["lat"], df["lon"])
-    df["hours"] = (df["datetime"] - df["prev_time"]).dt.total_seconds() / 3600
+
+    # Geodesic step distance using Karney's method (WGS84 ellipsoid)
+    df["step_km"] = vincenty_km(
+        df["prev_lat"].values, df["prev_lon"].values,
+        df["lat"].values,      df["lon"].values
+    )
+    df["hours"]     = (df["datetime"] - df["prev_time"]).dt.total_seconds() / 3600
     df["speed_kmh"] = np.where(df["hours"] > 0, df["step_km"] / df["hours"], np.nan)
-    df["bearing"] = compute_bearing(df["prev_lat"], df["prev_lon"], df["lat"], df["lon"])
+    df["bearing"]   = compute_bearing(df["prev_lat"], df["prev_lon"], df["lat"], df["lon"])
     df = df.drop(columns=["prev_lat", "prev_lon", "prev_time"])
     return df
 
