@@ -155,6 +155,16 @@ h1, h2, h3, h4 { color: #0a0f1e !important; font-weight: 800; }
 .ref-badge.core     { background: #0d5c4a; }
 .ref-badge.boundary { background: #c1440e; }
 
+/* ── Sidebar nav — force pure white text regardless of state ── */
+[data-testid="stSidebar"] nav a,
+[data-testid="stSidebar"] nav span,
+[data-testid="stSidebar"] .nav-link,
+[data-testid="stSidebar"] .nav-link span {
+    color: white !important;
+    opacity: 1 !important;
+    font-weight: 700 !important;
+}
+
 hr { border-color: #cbd5e1; }
 </style>
 """, unsafe_allow_html=True)
@@ -255,13 +265,13 @@ with st.sidebar:
         default_index=0,
         styles={
             "container":         {"padding": "0", "background-color": "transparent"},
-            "icon":              {"color": "rgba(255,255,255,0.80)", "font-size": "14px"},
-            "nav-link":          {"font-size": "13.5px", "font-weight": "600",
-                                  "color": "rgba(255,255,255,0.85)",
+            "icon":              {"color": "white", "font-size": "15px"},
+            "nav-link":          {"font-size": "14px", "font-weight": "700",
+                                  "color": "white",
                                   "border-radius": "8px", "margin": "2px 0",
-                                  "--hover-color": "rgba(255,255,255,0.15)"},
-            "nav-link-selected": {"background-color": "rgba(255,255,255,0.22)",
-                                  "color": "white", "font-weight": "800"},
+                                  "--hover-color": "rgba(255,255,255,0.20)"},
+            "nav-link-selected": {"background-color": "rgba(255,255,255,0.28)",
+                                  "color": "white", "font-weight": "900"},
         },
     )
 
