@@ -263,11 +263,9 @@ with st.sidebar:
         None,
         ["Latitude vs Time", "Longitude vs Time", "Both Coordinates", "Heat Maps",
          "Elephant Tracking", "Live Elephant Path", "Migration & Climate",
-         "Data Table", "Home Range & Speed", "Dona & Recollared", "Density & Climate", "Day / Night",
-         "Vegetation Tracking", "Tracking"],
+         "Data Table", "Home Range & Speed"],
         icons=["graph-up", "graph-up", "layers", "fire", "map", "play-circle",
-               "globe-americas", "table", "compass", "person-badge", "grid-3x3", "brightness-high", "tree",
-               "sliders"],
+               "globe-americas", "table", "compass"],
         default_index=0,
         styles={
             "container":         {"padding": "0", "background-color": "#ffffff"},
@@ -280,6 +278,22 @@ with st.sidebar:
                                   "color": "white", "font-weight": "900"},
         },
     )
+
+    st.divider()
+
+    st.markdown("""
+    <a href="https://akt-elephant26.share.connect.posit.cloud/" target="_blank"
+       style="text-decoration:none;">
+      <div style="background:#0d5c4a;color:white;border-radius:10px;padding:12px 16px;
+                  text-align:center;font-size:14px;font-weight:800;cursor:pointer;
+                  box-shadow:0 2px 8px rgba(0,0,0,0.15);margin-bottom:8px;">
+        🔬 Full Analysis ↗
+        <div style="font-size:11px;font-weight:500;opacity:0.85;margin-top:3px;">
+          Dona & Recollared · Density & Climate<br>Day/Night · Vegetation · Tracking
+        </div>
+      </div>
+    </a>
+    """, unsafe_allow_html=True)
 
     st.divider()
 
@@ -2931,16 +2945,10 @@ PAGES = {
     "Longitude vs Time": render_lon_tab,
     "Both Coordinates": render_both_tab,
     "Heat Maps": render_heat_tab,
-    "Elephant Tracking": render_tracking_tab,
-    "Live Elephant Path": render_live_tab,
+    "Elephant Tracking": render_tracking_tab,    "Live Elephant Path": render_live_tab,
     "Migration & Climate": render_climate_tab,
     "Data Table": render_data_tab,
     "Home Range & Speed": render_mcp_tab,
-    "Dona & Recollared": render_dona_recollared_tab,
-    "Density & Climate": render_density_climate_tab,
-    "Day / Night": render_day_night_tab,
-    "Vegetation Tracking": render_vegetation_tab,
-    "Tracking": render_tracking_general_tab,
 }
 
 PAGES[nav]()
