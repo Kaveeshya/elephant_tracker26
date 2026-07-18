@@ -117,7 +117,7 @@ h1, h2, h3, h4 { color: #0a0f1e !important; font-weight: 800; }
 
 /* ── Streamlit multiselect tags ── */
 [data-baseweb="tag"] {
-    background: #90EE90 !important;
+    background: #c0392b !important;
     color: white !important;
     border-radius: 6px !important;
     font-weight: 700 !important;
@@ -125,7 +125,7 @@ h1, h2, h3, h4 { color: #0a0f1e !important; font-weight: 800; }
 
 /* ── Main area buttons ── */
 .stButton button {
-    background: #90EE90;
+    background: #c0392b;
     color: white;
     border: none;
     border-radius: 8px;
@@ -2026,43 +2026,53 @@ def render_tracking_tab():
 # TAB 6 — LIVE ELEPHANT PATH (frame-by-frame playback)
 # ══════════════════════════════════════════════════════════════════════════
 def render_live_tab():
-    # ── Filters row ABOVE the map ─────────────────────────────────────────
     card_open("🐘 Live Elephant Path")
-    f1, f2, f3 = st.columns([3, 3, 6])
+    f1, f2, f3 = st.columns([4, 3, 5])
     with f1:
-        live_elephant = st.selectbox("Elephant", ALL_NAMES, key="live_elephant")
+        live_elephants = st.multiselect(
+            "Select Elephants (max 3)", ALL_NAMES,
+            default=[ALL_NAMES[0]],
+            max_selections=3,
+            key="live_elephants",
+        )
     with f2:
         live_month_label = st.selectbox("Month", list(MONTH_CHOICES.keys()), key="live_month")
     with f3:
-        st.caption("Elephant + Month here are specific to this page. The sidebar Date Range still applies. "
-                   "Drag the slider or press ▶ Play to animate.")
+        st.caption("Select up to 3 elephants. All tracks share one slider — "
+                   "the frame syncs to the elephant with the most GPS fixes. "
+                   "Sidebar Date Range still applies.")
     card_close()
+
+    if not live_elephants:
+        st.info("Select at least one elephant.")
+        return
 
     live_month = MONTH_CHOICES[live_month_label]
 
-    df = elephants_df[
-        (elephants_df["name"] == live_elephant) &
-        (elephants_df["date_parsed"] >= date_start) & (elephants_df["date_parsed"] <= date_end)
-    ]
-    if live_month != "all":
-        df = df[df["year_month"] == live_month]
-    df = df.sort_values("datetime_sl").reset_index(drop=True)
+    # Build per-elephant dataframes
+    elephant_dfs = {}
+    for el in live_elephants:
+        d = elephants_df[
+            (elephants_df["name"] == el) &
+            (elephants_df["date_parsed"] >= date_start) &
+            (elephants_df["date_parsed"] <= date_end)
+        ]
+        if live_month != "all":
+            d = d[d["year_month"] == live_month]
+        d = d.sort_values("datetime_sl").reset_index(drop=True)
+        if not d.empty:
+            elephant_dfs[el] = d
 
-    # ── Metric strip ──────────────────────────────────────────────────────
-    if not df.empty:
-        m1, m2, m3, m4 = st.columns(4)
-        m1.metric("GPS Fixes", f"{len(df):,}")
-        m2.metric("Elephant", live_elephant)
-        m3.metric("From", str(df["date_parsed"].min()))
-        m4.metric("To",   str(df["date_parsed"].max()))
-
-    # ── Full-width map ────────────────────────────────────────────────────
-    if df.empty:
-        card_open("🎬 Playback")
-        st.info("No GPS fixes for this elephant in the selected date range.")
-        card_close()
+    if not elephant_dfs:
+        st.info("No GPS fixes for selected elephants in the selected period.")
         return
-    render_live_playback(df, live_elephant)
+
+    # Metric strip
+    cols = st.columns(len(elephant_dfs))
+    for col, (el, d) in zip(cols, elephant_dfs.items()):
+        col.metric(f"🐘 {el}", f"{len(d):,} fixes")
+
+    render_live_playback_multi(elephant_dfs)
 
 
 def _static_center_zoom(pts):
@@ -2077,6 +2087,181 @@ def _static_center_zoom(pts):
     zoom = int(min(max(zoom, 3), 16))
     center = ((max(lats) + min(lats)) / 2, (max(lons) + min(lons)) / 2)
     return center, zoom
+
+
+def _build_live_map_component_multi(elephant_dfs):
+    import json
+    elephants_data = []
+    all_lats, all_lons = [], []
+
+    for el, df in elephant_dfs.items():
+        clr = du.get_color(el)
+        n   = len(df)
+        lats  = df["lat"].tolist()
+        lons  = df["lon"].tolist()
+        times = df["datetime_sl"].dt.strftime("%d %b %Y %H:%M").tolist()
+        step_km = [None]
+        for i in range(1, n):
+            step_km.append(round(du.vincenty_km(
+                np.array([lats[i-1]]), np.array([lons[i-1]]),
+                np.array([lats[i]]),   np.array([lons[i]])
+            ).item(), 3))
+        checkpoints = []
+        step = max(1, n // 60)
+        idxs = sorted(set(list(range(3, n + 1, step)) + ([n] if n >= 3 else [])))
+        for i in idxs:
+            h = du.compute_hull(df.iloc[:i], ratio=0.3)
+            if h:
+                checkpoints.append({"frame": i, "area": round(h["area_km2"], 3),
+                                     "poly": list(zip(h["lats"], h["lons"]))})
+        all_lats += lats
+        all_lons += lons
+        elephants_data.append({
+            "name": el, "color": clr, "n": n,
+            "lats": lats, "lons": lons,
+            "times": times, "step": step_km,
+            "checkpoints": checkpoints,
+        })
+
+    max_n  = max(e["n"] for e in elephants_data)
+    center = [(max(all_lats)+min(all_lats))/2, (max(all_lons)+min(all_lons))/2]
+    _, zoom = _static_center_zoom(list(zip(all_lats, all_lons)))
+    data_json = json.dumps({"elephants": elephants_data, "max_n": max_n,
+                             "center": center, "zoom": zoom})
+
+    html = """
+<div id="live_root" style="font-family:'Segoe UI',system-ui,sans-serif;">
+  <div style="display:flex;gap:14px;align-items:center;margin-bottom:10px;">
+    <button id="live_play_btn" style="background:#0d5c4a;color:white;border:none;border-radius:8px;
+      padding:8px 18px;font-size:14px;font-weight:700;cursor:pointer;">▶ Play</button>
+    <input id="live_slider" type="range" min="1" style="flex:1;accent-color:#0d5c4a;">
+    <span id="live_frame_label" style="font-size:13px;color:#334155;white-space:nowrap;
+      min-width:110px;text-align:right;font-weight:600;"></span>
+    <div style="display:flex;gap:2px;background:#e2e8f0;border-radius:8px;padding:2px;">
+      <button id="bm_light" style="border:none;border-radius:6px;padding:6px 12px;
+        font-size:12px;font-weight:700;cursor:pointer;background:#0d5c4a;color:white;">Light</button>
+      <button id="bm_street" style="border:none;border-radius:6px;padding:6px 12px;
+        font-size:12px;font-weight:700;cursor:pointer;background:transparent;color:#475569;">Street</button>
+      <button id="bm_satellite" style="border:none;border-radius:6px;padding:6px 12px;
+        font-size:12px;font-weight:700;cursor:pointer;background:transparent;color:#475569;">Satellite</button>
+    </div>
+  </div>
+  <div id="info_strip" style="display:flex;gap:10px;margin-bottom:12px;"></div>
+  <div id="live_map_div" style="height:520px;border-radius:12px;overflow:hidden;
+       box-shadow:0 2px 10px rgba(0,0,0,.08);"></div>
+</div>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function(){
+  const D = __DATA_JSON__;
+  const N = D.max_n;
+  const map = L.map('live_map_div',{zoomAnimation:false,fadeAnimation:false,markerZoomAnimation:false}).setView(D.center,D.zoom);
+  const tiles = {
+    light:     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{attribution:'&copy; OpenStreetMap &copy; CARTO',maxZoom:19}),
+    street:    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap contributors',maxZoom:19}),
+    satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:'Tiles &copy; Esri',maxZoom:19}),
+  };
+  tiles.light.addTo(map);
+  let curBm='light';
+  const bmBtns={light:document.getElementById('bm_light'),street:document.getElementById('bm_street'),satellite:document.getElementById('bm_satellite')};
+  function setBasemap(w){if(w===curBm)return;map.removeLayer(tiles[curBm]);tiles[w].addTo(map);curBm=w;
+    for(const k in bmBtns){bmBtns[k].style.background=k===w?'#0d5c4a':'transparent';bmBtns[k].style.color=k===w?'white':'#475569';}}
+  bmBtns.light.onclick=()=>setBasemap('light');
+  bmBtns.street.onclick=()=>setBasemap('street');
+  bmBtns.satellite.onclick=()=>setBasemap('satellite');
+
+  const strip = document.getElementById('info_strip');
+  const elephants = D.elephants.map(function(e,idx){
+    const ft = e.lats.map((la,i)=>[la,e.lons[i]]);
+    L.polyline(ft,{color:e.color,weight:1,opacity:0.18}).addTo(map);
+    const traveled = L.polyline([],{color:e.color,weight:3,opacity:0.95}).addTo(map);
+    const hull     = L.polygon([],{color:e.color,weight:2,fillColor:e.color,fillOpacity:0.15}).addTo(map);
+    const marker   = L.circleMarker(ft[0]||D.center,{radius:9,color:'#fff',weight:2.5,fillColor:e.color,fillOpacity:1}).addTo(map).bindTooltip(e.name);
+    const card = document.createElement('div');
+    card.style.cssText=`flex:1;background:white;border-radius:10px;padding:10px 14px;box-shadow:0 2px 8px rgba(0,0,0,.08);font-size:12px;color:#1e293b;border-left:4px solid ${e.color};`;
+    card.innerHTML=`<div style="font-weight:800;color:${e.color};font-size:13px;margin-bottom:6px;">${e.name}</div>
+      <div><b>Time:</b> <span id="ft_${idx}">—</span></div>
+      <div><b>Lat:</b> <span id="fla_${idx}">—</span></div>
+      <div><b>Lon:</b> <span id="flo_${idx}">—</span></div>
+      <div><b>Step:</b> <span id="fs_${idx}">—</span></div>
+      <div><b>Hull:</b> <span id="fh_${idx}">—</span></div>
+      <div style="margin-top:6px;"><b>Progress:</b> <span id="fp_${idx}">—</span>
+        <div style="background:#e2e8f0;border-radius:4px;height:5px;margin-top:4px;overflow:hidden;">
+          <div id="fb_${idx}" style="background:${e.color};height:100%;width:0%;"></div></div></div>`;
+    strip.appendChild(card);
+    function hullAt(f){let b=null;for(const cp of e.checkpoints){if(cp.frame<=f)b=cp;else break;}return b;}
+    function update(f){
+      const ef=Math.min(f,e.n);
+      traveled.setLatLngs(ft.slice(0,ef));
+      marker.setLatLng(ft[ef-1]||ft[0]);
+      const cp=hullAt(ef); hull.setLatLngs(cp?cp.poly:[]);
+      document.getElementById('ft_'+idx).innerText=e.times[ef-1]||'—';
+      document.getElementById('fla_'+idx).innerText=(e.lats[ef-1]||0).toFixed(5)+' °N';
+      document.getElementById('flo_'+idx).innerText=(e.lons[ef-1]||0).toFixed(5)+' °E';
+      document.getElementById('fs_'+idx).innerText=e.step[ef-1]!=null?e.step[ef-1]+' km':'—';
+      document.getElementById('fh_'+idx).innerText=cp?cp.area+' km²':'≥3 fixes needed';
+      document.getElementById('fp_'+idx).innerText=ef+' / '+e.n;
+      document.getElementById('fb_'+idx).style.width=(100*ef/e.n)+'%';
+    }
+    return {ft,update};
+  });
+
+  const slider=document.getElementById('live_slider');
+  const playBtn=document.getElementById('live_play_btn');
+  const lbl=document.getElementById('live_frame_label');
+  slider.max=N; slider.value=N;
+  let frame=N,playing=false,timer=null;
+  function setFrame(f){
+    frame=Math.max(1,Math.min(N,f));
+    elephants.forEach(e=>e.update(frame));
+    lbl.innerText='Fix '+frame+' of '+N;
+    slider.value=frame;
+  }
+  slider.addEventListener('input',function(){pause();setFrame(parseInt(this.value));});
+  function pause(){playing=false;if(timer){clearInterval(timer);timer=null;}playBtn.innerText='▶ Play';}
+  function play(){if(frame>=N)setFrame(1);playing=true;playBtn.innerText='⏸ Pause';
+    timer=setInterval(function(){if(frame<N)setFrame(frame+1);else pause();},250);}
+  playBtn.addEventListener('click',()=>playing?pause():play());
+  const allPts=D.elephants.flatMap(e=>e.lats.map((la,i)=>[la,e.lons[i]]));
+  if(allPts.length)map.fitBounds(allPts,{padding:[20,20]});
+  setFrame(N);
+})();
+</script>"""
+    return html.replace("__DATA_JSON__", data_json)
+
+
+def render_live_playback_multi(elephant_dfs):
+    card_open("🎬 Live Playback — Multiple Elephants",
+              "All selected elephants share one slider. Each elephant's path, hull polygon, "
+              "and info card update together as you drag or press Play.")
+    st.components.v1.html(_build_live_map_component_multi(elephant_dfs), height=900, scrolling=False)
+    card_close()
+
+    card_open("📐 Home-Range Hull Area Growth")
+    fig = go.Figure()
+    for el, df in elephant_dfs.items():
+        clr = du.get_color(el)
+        hull_rows = []
+        step = max(1, len(df) // 60)
+        idxs = sorted(set(list(range(3, len(df)+1, step)) + ([len(df)] if len(df) >= 3 else [])))
+        for i in idxs:
+            h = du.compute_hull(df.iloc[:i], ratio=0.3)
+            if h:
+                hull_rows.append({"datetime_sl": df.iloc[i-1]["datetime_sl"], "area_km2": h["area_km2"]})
+        if hull_rows:
+            hdf = pd.DataFrame(hull_rows)
+            fig.add_trace(go.Scatter(x=hdf["datetime_sl"], y=hdf["area_km2"],
+                                     mode="lines+markers", name=el,
+                                     line=dict(color=clr, width=2),
+                                     marker=dict(color=clr, size=4)))
+    fig.update_layout(height=300, paper_bgcolor="white", plot_bgcolor="white",
+                      xaxis=dict(title="", tickformat="%b %Y", gridcolor="#e5e7eb"),
+                      yaxis=dict(title="Hull Area (km²)", gridcolor="#e5e7eb"),
+                      margin=dict(t=20, b=40, l=60, r=20),
+                      legend=dict(orientation="h", y=-0.3))
+    st.plotly_chart(fig, use_container_width=True)
+    card_close()
 
 
 def _build_live_map_component(df, live_elephant, clr):
@@ -2563,7 +2748,6 @@ def _build_mcp_hull_map(df, hulls, mcp_colors_subset, summary_df, elephants_pres
             folium.CircleMarker([r["lat"], r["lon"]], radius=3, color=color, fill=True, fill_color=color,
                                   fill_opacity=0.6, weight=1, tooltip=f"{el} — {r['datetime']:%d %b %Y}").add_to(fg)
         fg.add_to(m)
-       
     if elephants_present:
         all_pts = list(zip(df["lat"], df["lon"]))
         if all_pts:
