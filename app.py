@@ -117,7 +117,7 @@ h1, h2, h3, h4 { color: #0a0f1e !important; font-weight: 800; }
 
 /* ── Streamlit multiselect tags ── */
 [data-baseweb="tag"] {
-    background: #90EE90 !important;
+    background: #c0392b !important;
     color: white !important;
     border-radius: 6px !important;
     font-weight: 700 !important;
@@ -125,7 +125,7 @@ h1, h2, h3, h4 { color: #0a0f1e !important; font-weight: 800; }
 
 /* ── Main area buttons ── */
 .stButton button {
-    background: #90EE90;
+    background: #c0392b;
     color: white;
     border: none;
     border-radius: 8px;
@@ -2094,7 +2094,10 @@ def _build_live_map_component(df, live_elephant, clr):
 
     step_km = [None]
     for i in range(1, n):
-        step_km.append(round(du.haversine_km(lats[i - 1], lons[i - 1], lats[i], lons[i]), 3))
+        step_km.append(round(du.vincenty_km(
+            np.array([lats[i-1]]), np.array([lons[i-1]]),
+            np.array([lats[i]]),   np.array([lons[i]])
+        ).item(), 3))
 
     # Precompute hull polygons at a manageable number of checkpoints (matches
     # the previous "growing hull" sampling) rather than every single frame —
