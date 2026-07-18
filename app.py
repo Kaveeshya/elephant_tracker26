@@ -117,7 +117,7 @@ h1, h2, h3, h4 { color: #0a0f1e !important; font-weight: 800; }
 
 /* ── Streamlit multiselect tags ── */
 [data-baseweb="tag"] {
-    background: #c0392b !important;
+    background: #90EE90 !important;
     color: white !important;
     border-radius: 6px !important;
     font-weight: 700 !important;
@@ -125,7 +125,7 @@ h1, h2, h3, h4 { color: #0a0f1e !important; font-weight: 800; }
 
 /* ── Main area buttons ── */
 .stButton button {
-    background: #c0392b;
+    background: #90EE90;
     color: white;
     border: none;
     border-radius: 8px;
