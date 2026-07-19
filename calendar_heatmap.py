@@ -1,10 +1,8 @@
 """
 calendar_heatmap.py
-Plotly calendar heatmap that replicates R's calendarHeat() (lattice/grid) output:
-  - One row per year, weeks across x-axis, days-of-week down y-axis
-  - Discrete colour bins with a legend matching the R app exactly
-  - Thick BLACK month-boundary lines drawn as Plotly shapes (not as cell gaps)
-  - Sun=row 0 … Sat=row 6  (matching R's %w convention)
+Clean, visually appealing Plotly calendar heatmap — better than R's calendarHeat().
+One row per year, weeks across x-axis, days-of-week down y-axis.
+Uses SVG shapes for month borders only — no backing layer, clean white cells.
 """
 
 import numpy as np
@@ -12,42 +10,26 @@ import pandas as pd
 import plotly.graph_objects as go
 
 
-# ── helpers ──────────────────────────────────────────────────────────────────
-
 def _bin_values(values, breaks, n_bins):
-    """Map continuous values → integer bin index [0 .. n_bins-1].
-    Returns -1 only for truly missing data (NaN), NOT for zero values.
-    Zero-value days (e.g. 0% GPS availability) correctly map to bin 0."""
     values = pd.Series(values).astype(float)
-    # Use pd.cut with right=False so left edge is included in each bin
-    bins = pd.cut(values, bins=breaks, labels=False,
-                  include_lowest=True, right=True)
-    # Only mark as -1 (no data) where original value was NaN
+    bins = pd.cut(values, bins=breaks, labels=False, include_lowest=True, right=True)
     result = bins.copy()
     result[values.isna()] = -1
-    # Fill any remaining NaN from cut (values outside breaks) with -1
-    result = result.fillna(-1).astype(int)
-    return result
+    return result.fillna(-1).astype(int)
 
 
 def _year_grid(dates, bin_values, year):
-    """
-    Build the 7-row × 54-col grid for one year.
-    Returns z (int array, NaN = no day), hover (str array),
-    month_tick_cols, month_tick_labels.
-    """
-    start   = pd.Timestamp(year, 1, 1)
-    end     = pd.Timestamp(year, 12, 31)
+    start    = pd.Timestamp(year, 1, 1)
+    end      = pd.Timestamp(year, 12, 31)
     all_days = pd.date_range(start, end, freq="D")
 
-    # %w: Sunday=0 … Saturday=6  (same as R)
-    dow  = all_days.dayofweek.map({0:1,1:2,2:3,3:4,4:5,5:6,6:0})   # Mon=1..Sun=0→row
-    # week column: Sunday-starting ISO-like week number
+    # Sunday = 0, Monday = 1 ... Saturday = 6  (same as R %w)
+    dow  = all_days.dayofweek.map({0:1,1:2,2:3,3:4,4:5,5:6,6:0})
     woty = ((all_days - start).days + int(start.strftime("%w"))) // 7
-
     n_cols = int(woty.max()) + 1
-    z      = np.full((7, n_cols), np.nan)
-    hover  = np.empty((7, n_cols), dtype=object)
+
+    z     = np.full((7, n_cols), np.nan)
+    hover = np.empty((7, n_cols), dtype=object)
 
     val_map = {}
     for d, bv in zip(pd.to_datetime(pd.Series(dates)).values,
@@ -56,10 +38,9 @@ def _year_grid(dates, bin_values, year):
 
     for day, row, col in zip(all_days, dow, woty):
         bv = val_map.get(day.normalize(), -1)
-        z[row, col]     = np.nan if bv == -1 else bv
+        z[row, col]     = np.nan if bv < 0 else bv
         hover[row, col] = day.strftime("%d %b %Y")
 
-    # Month tick positions: first column of each month
     month_cols, month_labels = [], []
     for mo in range(1, 13):
         first = pd.Timestamp(year, mo, 1)
@@ -71,61 +52,46 @@ def _year_grid(dates, bin_values, year):
     return z, hover, month_cols, month_labels, n_cols
 
 
-def _month_border_shapes(year, z, xdomain, ydomain):
-    """
-    Return Plotly shape dicts that draw thick black month boundaries
-    matching R's calendarHeat() grid lines exactly.
-    Coordinates are in *paper* space (0-1) so they overlay the heatmap cell axes.
-    """
+def _month_borders(year, n_cols, x_domain, y_domain):
     start    = pd.Timestamp(year, 1, 1)
     end      = pd.Timestamp(year, 12, 31)
     all_days = pd.date_range(start, end, freq="D")
+    dow      = all_days.dayofweek.map({0:1,1:2,2:3,3:4,4:5,5:6,6:0})
 
-    dow  = all_days.dayofweek.map({0:1,1:2,2:3,3:4,4:5,5:6,6:0})
-    woty = ((all_days - start).days + int(start.strftime("%w"))) // 7
-    n_cols = int(woty.max()) + 1
+    x0, x1 = x_domain
+    y0, y1 = y_domain
 
-    # Build {date → (row, col)} lookup
-    cell = {day.normalize(): (int(r), int(c))
-            for day, r, c in zip(all_days, dow, woty)}
-
-    def frac_x(col):   return xdomain[0] + (col + 0.5) / n_cols * (xdomain[1] - xdomain[0])
-    def frac_y(row):   return ydomain[0] + (6.5 - row) / 7   * (ydomain[1] - ydomain[0])
+    def px(col): return x0 + col / n_cols * (x1 - x0)
+    def py(row): return y1 - row / 7   * (y1 - y0)
 
     shapes = []
-
-    def seg(x0, y0, x1, y1):
-        shapes.append(dict(
-            type="line", xref="paper", yref="paper",
-            x0=x0, y0=y0, x1=x1, y1=y1,
-            line=dict(color="black", width=1.8),
-        ))
+    def seg(xa, ya, xb, yb):
+        shapes.append(dict(type="line", xref="paper", yref="paper",
+                           x0=xa, y0=ya, x1=xb, y1=yb,
+                           line=dict(color="#333333", width=1.8)))
 
     # Outer border
-    seg(xdomain[0], ydomain[0], xdomain[1], ydomain[0])
-    seg(xdomain[0], ydomain[1], xdomain[1], ydomain[1])
-    seg(xdomain[0], ydomain[0], xdomain[0], ydomain[1])
-    seg(xdomain[1], ydomain[0], xdomain[1], ydomain[1])
+    seg(px(0), py(0), px(n_cols), py(0))
+    seg(px(0), py(7), px(n_cols), py(7))
+    seg(px(0), py(0), px(0),      py(7))
+    seg(px(n_cols), py(0), px(n_cols), py(7))
 
-    # Month-boundary vertical (and partial) lines
-    for mo in range(1, 13):
-        first = pd.Timestamp(year, mo, 1)
-        if first > end:
+    for mo in range(1, 12):
+        try:
+            fn = pd.Timestamp(year, mo + 1, 1)
+        except Exception:
             break
-        r0, c0 = cell[first.normalize()]
+        if fn > end: break
+        day_offset   = (fn - start).days
+        col_of_first = (day_offset + int(start.strftime("%w"))) // 7
+        row_of_first = int(dow[day_offset])
 
-        # Top border of this month's first partial column (rows 0..r0-1 belong to prev month)
-        if r0 > 0:
-            # Vertical line at left edge of c0 from top down to row r0
-            seg(frac_x(c0) - 0.5/n_cols*(xdomain[1]-xdomain[0])*2,
-                frac_y(-0.5),
-                frac_x(c0) - 0.5/n_cols*(xdomain[1]-xdomain[0])*2,
-                frac_y(r0 - 0.5))
-            # Horizontal line at top of row r0 from c0 to c0+1
-            seg(frac_x(c0) - 0.5/n_cols*(xdomain[1]-xdomain[0])*2,
-                frac_y(r0 - 0.5),
-                frac_x(c0) + 0.5/n_cols*(xdomain[1]-xdomain[0])*2,
-                frac_y(r0 - 0.5))
+        if row_of_first == 0:
+            seg(px(col_of_first), py(0), px(col_of_first), py(7))
+        else:
+            seg(px(col_of_first),     py(row_of_first), px(col_of_first),     py(7))
+            seg(px(col_of_first),     py(row_of_first), px(col_of_first + 1), py(row_of_first))
+            seg(px(col_of_first + 1), py(0),            px(col_of_first + 1), py(row_of_first))
 
     return shapes
 
@@ -139,13 +105,6 @@ def make_calendar_heatmap(
     colorscale=None,
     height=None,
 ):
-    """
-    Public API — called from app.py.
-
-    discrete_breaks / discrete_labels / discrete_colors control the
-    binned colour scheme (matching R's calendarHeat `at` / `colors`).
-    If these are None, a continuous YlOrRd scale is used instead.
-    """
     dates  = pd.to_datetime(pd.Series(dates)).reset_index(drop=True)
     values = pd.Series(values).reset_index(drop=True)
     years  = sorted(dates.dt.year.unique())
@@ -153,20 +112,16 @@ def make_calendar_heatmap(
 
     # ── colour setup ──────────────────────────────────────────────────────────
     if discrete_breaks is not None:
-        colors  = list(discrete_colors or ["#f1faee","#a8dadc","#457b9d","#1d3557"])
-        n_bins  = len(discrete_breaks) - 1
+        colors = list(discrete_colors or ["#f1faee","#a8dadc","#457b9d","#1d3557"])
+        n_bins = len(discrete_breaks) - 1
         if len(colors) < n_bins:
             colors = (colors * (n_bins // len(colors) + 1))[:n_bins]
-
-        # Build a step colorscale: each bin gets its own solid colour
         cs = []
         for i, c in enumerate(colors):
             cs.append([i / n_bins, c])
             cs.append([(i + 1) / n_bins, c])
-
         bin_vals = _bin_values(values, discrete_breaks, n_bins)
         zmin, zmax = 0, n_bins - 1
-
     else:
         colors   = None
         n_bins   = None
@@ -175,181 +130,119 @@ def make_calendar_heatmap(
         zmin     = float(np.nanmin(values)) if len(values) else 0
         zmax     = float(np.nanmax(values)) if len(values) else 1
 
-    # ── build figure ──────────────────────────────────────────────────────────
+    # ── layout constants ──────────────────────────────────────────────────────
+    LEFT_MARGIN  = 0.11   # space for day labels
+    RIGHT_MARGIN = 0.85 if discrete_breaks else 0.97
+    ROW_FRAC     = 1.0 / n_years
+    TOP_PAD      = 0.14   # fraction of row height for year label + month labels
+    BOT_PAD      = 0.05
+
     fig    = go.Figure()
-    row_h  = 1.0 / n_years
     shapes = []
 
     for i, yr in enumerate(years):
-        mask = dates.dt.year == yr
+        mask     = dates.dt.year == yr
         yr_bins  = bin_vals[mask].values if discrete_breaks else values[mask].astype(float).values
         yr_dates = dates[mask].values
 
         z, hover, month_cols, month_labels, n_cols = _year_grid(yr_dates, yr_bins, yr)
 
-        # y-domain for this year's strip (top year first)
-        y0 = 1.0 - (i + 1) * row_h
-        y1 = 1.0 - i * row_h
-        inner_y0 = y0 + row_h * 0.05
-        inner_y1 = y1 - row_h * 0.18   # leave more room at top for year label
-        x0_dom, x1_dom = 0.10, 0.86 if discrete_breaks else 0.95
+        # Paper-space y extents for this strip
+        strip_top = 1.0 - i * ROW_FRAC
+        strip_bot = 1.0 - (i + 1) * ROW_FRAC
+        cell_top  = strip_top - ROW_FRAC * TOP_PAD
+        cell_bot  = strip_bot + ROW_FRAC * BOT_PAD
 
-        # Trace-level axis refs: "x","y" for the first subplot, "x2","y2" for
-        # the second, etc. — there is no "x1"/"y1", that's a Plotly gotcha.
-        trace_x = "x" if i == 0 else f"x{i+1}"
-        trace_y = "y" if i == 0 else f"y{i+1}"
-        # update_layout() keys use the *long* form instead: "xaxis"/"yaxis"
-        # for the first subplot, "xaxis2"/"yaxis2" for the second, etc.
-        layout_x = "xaxis" if i == 0 else f"xaxis{i+1}"
-        layout_y = "yaxis" if i == 0 else f"yaxis{i+1}"
+        trace_x  = "x"      if i == 0 else f"x{i+1}"
+        trace_y  = "y"      if i == 0 else f"y{i+1}"
+        layout_x = "xaxis"  if i == 0 else f"xaxis{i+1}"
+        layout_y = "yaxis"  if i == 0 else f"yaxis{i+1}"
 
-        # ── single colour layer — no black backing ────────────────────────────
-        # R's calendarHeat uses a white/light-grey background with thin borders
-        # drawn only at month boundaries (shapes), NOT a black backing layer.
-        # Using a larger xgap/ygap with white paper_bgcolor gives the same
-        # clean look without the ugly thick black borders.
+        # ── heatmap ───────────────────────────────────────────────────────────
         fig.add_trace(go.Heatmap(
-            z=z,
-            text=hover, hoverinfo="text",
+            z=z, text=hover, hoverinfo="text",
             colorscale=cs, zmin=zmin, zmax=zmax,
             showscale=False,
-            xgap=2, ygap=2,
+            xgap=3, ygap=3,          # clean white gaps between cells
             x0=0, dx=1, y0=0, dy=1,
             xaxis=trace_x, yaxis=trace_y,
         ))
 
-        # ── axis layout ───────────────────────────────────────────────────────
+        # ── axes ──────────────────────────────────────────────────────────────
         fig.update_layout(**{
             layout_x: dict(
-                domain=[x0_dom, x1_dom], anchor=trace_y,
+                domain=[LEFT_MARGIN, RIGHT_MARGIN],
+                anchor=trace_y,
                 tickmode="array", tickvals=month_cols, ticktext=month_labels,
-                showgrid=False, side="bottom", zeroline=False,
-                showline=False, tickfont=dict(size=11, color="#333333"),
+                showgrid=False, side="bottom", zeroline=False, showline=False,
+                tickfont=dict(size=12, color="#444444", family="Segoe UI"),
+                tickangle=0,
             ),
             layout_y: dict(
-                domain=[inner_y0, inner_y1], anchor=trace_x,
+                domain=[cell_bot, cell_top],
+                anchor=trace_x,
                 tickmode="array",
                 tickvals=[0, 1, 2, 3, 4, 5, 6],
-                ticktext=["Sunday", "Monday", "Tuesday", "Wednesday",
-                          "Thursday", "Friday", "Saturday"],
-                autorange="reversed", showgrid=False,
-                zeroline=False, showline=False,
-                tickfont=dict(size=10, color="#333333"),
+                ticktext=["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+                autorange="reversed",
+                showgrid=False, zeroline=False, showline=False,
+                tickfont=dict(size=11, color="#555555", family="Segoe UI"),
             ),
         })
 
-        # ── year label ABOVE the strip ────────────────────────────────────────
+        # ── year label centred above strip ────────────────────────────────────
         fig.add_annotation(
-            x=(x0_dom + x1_dom) / 2,
-            y=inner_y1 + row_h * 0.06,
+            x=(LEFT_MARGIN + RIGHT_MARGIN) / 2,
+            y=cell_top + ROW_FRAC * 0.07,
             xref="paper", yref="paper",
             text=f"<b>{yr}</b>",
-            showarrow=False,
-            xanchor="center",
-            font=dict(size=13, color="#1e293b"),
+            showarrow=False, xanchor="center",
+            font=dict(size=14, color="#1e293b", family="Segoe UI"),
         )
 
         # ── month boundary shapes ─────────────────────────────────────────────
-        shapes += _month_borders(yr, z, n_cols,
-                                 x_domain=(x0_dom, x1_dom),
-                                 y_domain=(inner_y0, inner_y1))
+        shapes += _month_borders(
+            yr, n_cols,
+            x_domain=(LEFT_MARGIN, RIGHT_MARGIN),
+            y_domain=(cell_bot, cell_top),
+        )
 
-    # ── discrete legend (right margin) — stacked vertically like R ───────────
+    # ── discrete legend — clean stacked boxes ────────────────────────────────
     if discrete_breaks is not None and discrete_labels is not None:
-        legend_x  = 0.89
-        box_size  = 0.032
-        gap       = 0.07
-        start_y   = 0.95
+        leg_x   = RIGHT_MARGIN + 0.025
+        box_w   = 0.038
+        box_h   = 0.030
+        gap     = 0.060
+        start_y = 0.94
+
         for j, (lab, col) in enumerate(zip(discrete_labels, colors)):
-            ypos = start_y - j * gap
+            y_mid = start_y - j * gap
             fig.add_shape(
                 type="rect", xref="paper", yref="paper",
-                x0=legend_x, x1=legend_x + box_size,
-                y0=ypos - box_size/2, y1=ypos + box_size/2,
+                x0=leg_x,        x1=leg_x + box_w,
+                y0=y_mid - box_h/2, y1=y_mid + box_h/2,
                 fillcolor=col,
-                line=dict(color="black", width=0.8),
+                line=dict(color="#555555", width=0.8),
             )
             fig.add_annotation(
-                x=legend_x + box_size + 0.012, y=ypos,
+                x=leg_x + box_w + 0.010, y=y_mid,
                 xref="paper", yref="paper",
                 text=f"<b>{lab}</b>", showarrow=False,
-                xanchor="left", font=dict(size=11, color="#1e293b"),
+                xanchor="left",
+                font=dict(size=11, color="#1e293b", family="Segoe UI"),
             )
 
+    # ── global layout ─────────────────────────────────────────────────────────
+    row_px = 210
     fig.update_layout(
-        title=dict(text=title, x=0.5, font=dict(size=14, color="#1e293b")),
-        height=height or max(230 * n_years, 280),
-        margin=dict(t=60, b=40, l=90, r=160 if discrete_breaks else 30),
+        title=dict(
+            text=title, x=0.5, xanchor="center",
+            font=dict(size=15, color="#1e293b", family="Segoe UI"),
+        ),
+        height=height or max(row_px * n_years + 60, 280),
+        margin=dict(t=55, b=35, l=10, r=175 if discrete_breaks else 20),
         paper_bgcolor="#ffffff",
         plot_bgcolor="#ffffff",
-        font=dict(color="#1e293b", family="Segoe UI"),
         shapes=shapes,
     )
     return fig
-
-
-# ── month borders (proper R-style) ────────────────────────────────────────────
-
-def _month_borders(year, z, n_cols, x_domain, y_domain):
-    """
-    Compute the thick black month-boundary polyline segments in paper coords,
-    replicating R calendarHeat()'s grid.lines() calls exactly.
-    Each month boundary is a staircase line that steps between columns.
-    """
-    start    = pd.Timestamp(year, 1, 1)
-    end      = pd.Timestamp(year, 12, 31)
-    all_days = pd.date_range(start, end, freq="D")
-
-    dow  = all_days.dayofweek.map({0:1,1:2,2:3,3:4,4:5,5:6,6:0})
-    woty = ((all_days - start).days + int(start.strftime("%w"))) // 7
-
-    x0, x1 = x_domain
-    y0, y1 = y_domain
-
-    def px(col):
-        """left edge of column `col` in paper coords"""
-        return x0 + col / n_cols * (x1 - x0)
-
-    def py(row):
-        """top edge of row `row` in paper coords (row 0 = top = Sunday)"""
-        return y1 - row / 7 * (y1 - y0)
-
-    shapes = []
-
-    def seg(xa, ya, xb, yb):
-        shapes.append(dict(
-            type="line", xref="paper", yref="paper",
-            x0=xa, y0=ya, x1=xb, y1=yb,
-            line=dict(color="black", width=1.6),
-        ))
-
-    # Outer box
-    seg(px(0), py(0), px(n_cols), py(0))   # top
-    seg(px(0), py(7), px(n_cols), py(7))   # bottom
-    seg(px(0), py(0), px(0),      py(7))   # left
-    seg(px(n_cols), py(0), px(n_cols), py(7))  # right
-
-    # One staircase per month boundary (between month m and m+1)
-    for mo in range(1, 12):
-        # First day of next month
-        try:
-            first_next = pd.Timestamp(year, mo + 1, 1)
-        except Exception:
-            break
-        if first_next > end:
-            break
-
-        day_offset = (first_next - start).days
-        col_of_first = (day_offset + int(start.strftime("%w"))) // 7
-        row_of_first = int(all_days.dayofweek.map({0:1,1:2,2:3,3:4,4:5,5:6,6:0})[day_offset])
-
-        if row_of_first == 0:
-            # Boundary falls at start of a column — simple vertical line
-            seg(px(col_of_first), py(0), px(col_of_first), py(7))
-        else:
-            # Staircase: vertical up to the split row, horizontal, then vertical down
-            seg(px(col_of_first),     py(row_of_first), px(col_of_first),     py(7))
-            seg(px(col_of_first),     py(row_of_first), px(col_of_first + 1), py(row_of_first))
-            seg(px(col_of_first + 1), py(0),            px(col_of_first + 1), py(row_of_first))
-
-    return shapes
