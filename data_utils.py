@@ -281,7 +281,7 @@ def add_movement_metrics(df):
     return df
 
 
-def compute_hull(df, ratio=0.5):
+def compute_hull(df, ratio=0.8):
     """Concave hull (ratio=0.3) matching R's st_concave_hull, with a convex
     hull fallback. Returns dict(lons, lats, area_km2) or None."""
     if len(df) < 3:
