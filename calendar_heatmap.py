@@ -15,10 +15,19 @@ import plotly.graph_objects as go
 # ── helpers ──────────────────────────────────────────────────────────────────
 
 def _bin_values(values, breaks, n_bins):
-    """Map continuous values → integer bin index [0 .. n_bins-1]."""
+    """Map continuous values → integer bin index [0 .. n_bins-1].
+    Returns -1 only for truly missing data (NaN), NOT for zero values.
+    Zero-value days (e.g. 0% GPS availability) correctly map to bin 0."""
     values = pd.Series(values).astype(float)
-    bins = pd.cut(values, bins=breaks, labels=False, include_lowest=True)
-    return bins.fillna(-1).astype(int)          # -1 = no data
+    # Use pd.cut with right=False so left edge is included in each bin
+    bins = pd.cut(values, bins=breaks, labels=False,
+                  include_lowest=True, right=True)
+    # Only mark as -1 (no data) where original value was NaN
+    result = bins.copy()
+    result[values.isna()] = -1
+    # Fill any remaining NaN from cut (values outside breaks) with -1
+    result = result.fillna(-1).astype(int)
+    return result
 
 
 def _year_grid(dates, bin_values, year):
@@ -181,9 +190,9 @@ def make_calendar_heatmap(
         # y-domain for this year's strip (top year first)
         y0 = 1.0 - (i + 1) * row_h
         y1 = 1.0 - i * row_h
-        inner_y0 = y0 + row_h * 0.08
-        inner_y1 = y1 - row_h * 0.10
-        x0_dom, x1_dom = 0.06, 0.88 if discrete_breaks else 0.95
+        inner_y0 = y0 + row_h * 0.05
+        inner_y1 = y1 - row_h * 0.18   # leave more room at top for year label
+        x0_dom, x1_dom = 0.10, 0.86 if discrete_breaks else 0.95
 
         # Trace-level axis refs: "x","y" for the first subplot, "x2","y2" for
         # the second, etc. — there is no "x1"/"y1", that's a Plotly gotcha.
@@ -221,24 +230,29 @@ def make_calendar_heatmap(
                 domain=[x0_dom, x1_dom], anchor=trace_y,
                 tickmode="array", tickvals=month_cols, ticktext=month_labels,
                 showgrid=False, side="bottom", zeroline=False,
-                showline=False,
+                showline=False, tickfont=dict(size=11, color="#333333"),
             ),
             layout_y: dict(
                 domain=[inner_y0, inner_y1], anchor=trace_x,
                 tickmode="array",
-                tickvals=[0,1,2,3,4,5,6],
-                ticktext=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],
+                tickvals=[0, 1, 2, 3, 4, 5, 6],
+                ticktext=["Sunday", "Monday", "Tuesday", "Wednesday",
+                          "Thursday", "Friday", "Saturday"],
                 autorange="reversed", showgrid=False,
                 zeroline=False, showline=False,
+                tickfont=dict(size=10, color="#333333"),
             ),
         })
 
-        # ── year label on the left ────────────────────────────────────────────
+        # ── year label ABOVE the strip ────────────────────────────────────────
         fig.add_annotation(
-            x=0.0, y=(inner_y0 + inner_y1) / 2,
+            x=(x0_dom + x1_dom) / 2,
+            y=inner_y1 + row_h * 0.06,
             xref="paper", yref="paper",
-            text=f"<b>{yr}</b>", showarrow=False,
-            xanchor="right", font=dict(size=13, color="#1e293b"),
+            text=f"<b>{yr}</b>",
+            showarrow=False,
+            xanchor="center",
+            font=dict(size=13, color="#1e293b"),
         )
 
         # ── month boundary shapes ─────────────────────────────────────────────
@@ -246,31 +260,32 @@ def make_calendar_heatmap(
                                  x_domain=(x0_dom, x1_dom),
                                  y_domain=(inner_y0, inner_y1))
 
-    # ── discrete legend (right margin) ───────────────────────────────────────
+    # ── discrete legend (right margin) — stacked vertically like R ───────────
     if discrete_breaks is not None and discrete_labels is not None:
-        legend_x = 0.91
-        n_lab    = len(discrete_labels)
+        legend_x  = 0.89
+        box_size  = 0.032
+        gap       = 0.07
+        start_y   = 0.95
         for j, (lab, col) in enumerate(zip(discrete_labels, colors)):
-            ypos = 0.95 - j * (0.85 / max(n_lab - 1, 1))
-            # coloured square
+            ypos = start_y - j * gap
             fig.add_shape(
-                type="rect",
-                xref="paper", yref="paper",
-                x0=legend_x, x1=legend_x + 0.035,
-                y0=ypos - 0.025, y1=ypos + 0.025,
-                fillcolor=col, line=dict(color="black", width=0.8),
+                type="rect", xref="paper", yref="paper",
+                x0=legend_x, x1=legend_x + box_size,
+                y0=ypos - box_size/2, y1=ypos + box_size/2,
+                fillcolor=col,
+                line=dict(color="black", width=0.8),
             )
             fig.add_annotation(
-                x=legend_x + 0.042, y=ypos,
+                x=legend_x + box_size + 0.012, y=ypos,
                 xref="paper", yref="paper",
-                text=lab, showarrow=False,
+                text=f"<b>{lab}</b>", showarrow=False,
                 xanchor="left", font=dict(size=11, color="#1e293b"),
             )
 
     fig.update_layout(
         title=dict(text=title, x=0.5, font=dict(size=14, color="#1e293b")),
-        height=height or max(200 * n_years, 240),
-        margin=dict(t=50, b=30, l=55, r=150 if discrete_breaks else 30),
+        height=height or max(230 * n_years, 280),
+        margin=dict(t=60, b=40, l=90, r=160 if discrete_breaks else 30),
         paper_bgcolor="#ffffff",
         plot_bgcolor="#ffffff",
         font=dict(color="#1e293b", family="Segoe UI"),
