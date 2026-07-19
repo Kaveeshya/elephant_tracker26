@@ -2852,18 +2852,9 @@ def render_mcp_tab():
         cdf["cum_dist_km"] = cdf.groupby("name")["step_km"].cumsum()
         fig = go.Figure()
         for el in elephants_present:
-            sub = cdf[cdf["name"] == el].copy().reset_index(drop=True)
-            # Insert NaN at large time gaps so Plotly breaks the line
-            gap_hrs = sub["datetime"].diff().dt.total_seconds().div(3600)
-            big_gaps = gap_hrs[gap_hrs > 6].index.tolist()
-            na_rows = sub.loc[big_gaps].copy()
-            na_rows["cum_dist_km"] = float("nan")
-            sub = pd.concat([sub, na_rows]).sort_values("datetime").reset_index(drop=True)
-            fig.add_trace(go.Scatter(
-                x=sub["datetime"], y=sub["cum_dist_km"],
-                mode="lines", name=el, connectgaps=False,
-                line=dict(color=mcp_colors[el]),
-            ))
+            sub = cdf[cdf["name"] == el]
+            fig.add_trace(go.Scatter(x=sub["datetime"], y=sub["cum_dist_km"], mode="lines", name=el,
+                                       line=dict(color=mcp_colors[el])))
         fig.update_layout(paper_bgcolor="#fff", plot_bgcolor="#fff", font=dict(color="#333", family="Segoe UI"),
                            xaxis=dict(title="", gridcolor="#e5e5e5"),
                            yaxis=dict(title="Cumulative distance (km)", gridcolor="#e5e5e5"),
