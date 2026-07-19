@@ -203,23 +203,17 @@ def make_calendar_heatmap(
         layout_x = "xaxis" if i == 0 else f"xaxis{i+1}"
         layout_y = "yaxis" if i == 0 else f"yaxis{i+1}"
 
-        # ── black backing layer (gives cells a thin black border) ────────────
-        z_back = np.where(np.isnan(z), np.nan, 0.0)
-        fig.add_trace(go.Heatmap(
-            z=z_back,
-            colorscale=[[0,"black"],[1,"black"]],
-            zmin=0, zmax=1, showscale=False, hoverinfo="skip",
-            xgap=0, ygap=0, x0=0, dx=1, y0=0, dy=1,
-            xaxis=trace_x, yaxis=trace_y,
-        ))
-
-        # ── colour layer ──────────────────────────────────────────────────────
+        # ── single colour layer — no black backing ────────────────────────────
+        # R's calendarHeat uses a white/light-grey background with thin borders
+        # drawn only at month boundaries (shapes), NOT a black backing layer.
+        # Using a larger xgap/ygap with white paper_bgcolor gives the same
+        # clean look without the ugly thick black borders.
         fig.add_trace(go.Heatmap(
             z=z,
             text=hover, hoverinfo="text",
             colorscale=cs, zmin=zmin, zmax=zmax,
-            showscale=False,              # legend built manually below
-            xgap=1.5, ygap=1.5,
+            showscale=False,
+            xgap=2, ygap=2,
             x0=0, dx=1, y0=0, dy=1,
             xaxis=trace_x, yaxis=trace_y,
         ))
