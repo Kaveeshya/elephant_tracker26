@@ -263,7 +263,7 @@ with st.sidebar:
         None,
         ["Latitude vs Time", "Longitude vs Time", "Both Coordinates", "Heat Maps",
          "Elephant Tracking", "Live Elephant Path", "Migration & Climate",
-         "Data Table", "Home Range & Movements"],
+         "Data Table", "Home Range & Speed"],
         icons=["graph-up", "graph-up", "layers", "fire", "map", "play-circle",
                "globe-americas", "table", "compass"],
         default_index=0,
